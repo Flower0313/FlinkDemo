@@ -1,4 +1,4 @@
-package gener;
+package test1;
 
 /**
  * @ClassName FlinkDemo-testDemo

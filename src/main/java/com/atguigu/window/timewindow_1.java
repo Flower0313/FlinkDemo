@@ -89,7 +89,7 @@ public class timewindow_1 {
 
         //3.其他API
         //定义标签
-        OutputTag<SensorReading> lateTag = new OutputTag<>("late");
+        OutputTag<SensorReading> lateTag = new OutputTag<SensorReading>("late"){};
         //这里不能替换DataStream类，因为只有这个类有getSideOutput方法
         SingleOutputStreamOperator<SensorReading> sumStream = dataStream.keyBy(SensorReading::getId)
                 .window(TumblingProcessingTimeWindows.of(Time.seconds(5)))

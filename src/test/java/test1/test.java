@@ -1,6 +1,4 @@
-package gener;
-
-import org.apache.flink.streaming.api.windowing.time.Time;
+package test1;
 
 /**
  * @ClassName FlinkDemo-test

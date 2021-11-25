@@ -16,21 +16,28 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
  */
 public class WordCount2 {
     public static void main(String[] args) throws Exception {
-        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-
-        //设置参数为--host 192.168.10.102 --port 7777
+        StreamExecutionEnvironment env =
+                StreamExecutionEnvironment.getExecutionEnvironment();
+        env.setParallelism(1);
+        /*//设置参数为--host 192.168.10.102 --port 7777
         ParameterTool parameterTool = ParameterTool.fromArgs(args);
 
         String host = parameterTool.get("host"); //这个名称可以自定义，但是一定要和传入--后面的名字一样
         int port = parameterTool.getInt("port");
 
-        DataStreamSource<String> source = env.socketTextStream(host, port);
+        DataStreamSource<String> source = env.socketTextStream(host, port);*/
+        String inputPath = "T:\\ShangGuiGu\\FlinkDemo\\src\\main\\resources\\wc.txt";
+
+        //todo 读取数据
+        //DataSource中本质就是DataSet
+        DataStream<String> source = env.readTextFile(inputPath);
 
 
         DataStream<Tuple2<String, Integer>> res =
                 source.flatMap(new WordCount1.MyFlatMapper())
                         .keyBy(x -> x.f0)
-                        .sum(1).setParallelism(2);//这个写死的2只针对sum这个任务
+                        //传参1表示数据在索引中的位置
+                        .sum(1).setParallelism(1);//这个写死的2只针对sum这个任务
         res.print();//.setParallelism(1);//设置并行度
         //结果中输出的前面的编号就是线程的编号，可以理解为分区
         //默认并行度是你电脑的核数

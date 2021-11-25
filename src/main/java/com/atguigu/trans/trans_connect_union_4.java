@@ -35,10 +35,8 @@ public class trans_connect_union_4 {
         });
 
         //声明标记
-        OutputTag<SensorReading> highTag = new OutputTag<SensorReading>("high") {
-        };
-        OutputTag<SensorReading> lowTag = new OutputTag<SensorReading>("low") {
-        };
+        OutputTag<SensorReading> highTag = new OutputTag<SensorReading>("high") {};
+        OutputTag<SensorReading> lowTag = new OutputTag<SensorReading>("low") {};
         //1.进行分流
         SingleOutputStreamOperator<SensorReading> mainDataStream = dataStream
                 .process(new ProcessFunction<SensorReading, SensorReading>() {
@@ -70,8 +68,7 @@ public class trans_connect_union_4 {
         ConnectedStreams<Tuple2<String, Double>, SensorReading> connectedStreams = warningStream.connect(lowStream);
         //CoMapFunction的输入数据类型和ConnectedStreams相同，返回的是Object，所以就随你需求来变动
         connectedStreams.map(new CoMapFunction<Tuple2<String, Double>, SensorReading, Object>() {
-            //两条流互不干扰，各自处理各自的数据
-
+            //两条流互不干扰，各自处理各自的数据，点进去CoMapFunction源码，能看见map1和map2分别对应CoMapFunction的第一个和第二个泛型
             @Override//为第一个连接流中的每个元素调用此方法
             public Object map1(Tuple2<String, Double> value) throws Exception {
                 //超过30度就返回三元组，最后是报警信息

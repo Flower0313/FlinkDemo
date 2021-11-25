@@ -3,6 +3,7 @@ package com.atguigu.trans;
 import com.atguigu.source.SensorReading;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.functions.RichMapFunction;
+import org.apache.flink.api.common.functions.RuntimeContext;
 import org.apache.flink.api.java.tuple.Tuple;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.configuration.Configuration;
@@ -45,13 +46,15 @@ public class trans_rich_5 {
 //普通函数
 class NormalMap implements MapFunction<SensorReading,Tuple2<String,Integer>>{
     @Override
-    public Tuple2<String, Integer> map(SensorReading x) throws Exception {
-        return new Tuple2<>(x.getId(), x.getId().length());//返回的参数类型决定R，调用map方法的对象决定T
+    public Tuple2<String, Integer> map(SensorReading value) throws Exception {
+        return new Tuple2<>(value.getId(), value.getId().length());//返回的参数类型决定R，调用map方法的对象决定T
     }
 }
 
 //富函数
 class RichMap extends RichMapFunction<SensorReading, Tuple2<String, Integer>> {
+
+
 
     @Override
     public Tuple2<String, Integer> map(SensorReading value) throws Exception {

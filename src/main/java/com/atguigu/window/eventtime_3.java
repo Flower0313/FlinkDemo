@@ -42,6 +42,7 @@ public class eventtime_3 {
                         return element.getTimeStamp() * 1000L;
                     }
                 }));
+        //这里标签要加个{}变成匿名内部类，这样就会变成eventtime_3$1内部类，这样周期就和这个程序一样长
         OutputTag<SensorReading> outPutLate = new OutputTag<SensorReading>("late"){};
 
         //基于事件时间的开窗聚合,统计15秒内温度的最小值,这里的15秒不是机器的走15秒，而是数据中时间戳的15秒数据
