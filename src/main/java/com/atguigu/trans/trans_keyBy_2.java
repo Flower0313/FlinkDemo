@@ -33,8 +33,9 @@ public class trans_keyBy_2 {
         //dataStream.keyBy(0); //方式二：已过期
         //dataStream.keyBy(x->x.getId()); //方式三
 
-        //方式四：方式三的简写
-        KeyedStream<SensorReading, String> kyStream = dataStream.keyBy(SensorReading::getId);//相当于scala中的_.getId
+        //方式四：方式三的简写,keyBy设置不setParallelism，因为它本身就是会根据hash来分区
+        KeyedStream<SensorReading, String> kyStream = dataStream.keyBy(SensorReading::getId)
+                ;//相当于scala中的_.getId
 
         //求组内温度最大值，但这个求最大值不是直接求，而是滚动求，就和sql中窗口函数的order by作用域滚动一样
         //组内来一条数据就比一次，每组各自统计各自的

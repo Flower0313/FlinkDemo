@@ -54,6 +54,7 @@ public class Practice_3 {
 
         @Override
         public void open(Configuration parameters) throws Exception {
+            //获取当前上下文，提交ValueState状态分发器
             lastTempState = getRuntimeContext().getState(new ValueStateDescriptor<Double>("last-temp", Double.class));
         }
 

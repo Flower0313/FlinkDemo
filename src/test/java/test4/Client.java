@@ -8,7 +8,11 @@ package test4;
  */
 public class Client {
     public static void main(String[] args) {
-        Student stu = new Student();
+        Student stu1 = new Student(){};
+        Student stu2 = new Student();
+        System.gc();
+        System.out.println(stu1.getClass());
+        System.out.println(stu2.getClass());
     }
 
 }
