@@ -11,7 +11,7 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
  * @Create 2021年11月26日17:50 - 周五
  * @Describe
  */
-public class trans_map_6 {
+public class trans_map_7 {
     public static void main(String[] args) throws Exception {
         StreamExecutionEnvironment env =
                 StreamExecutionEnvironment.getExecutionEnvironment();
