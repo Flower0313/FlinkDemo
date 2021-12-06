@@ -52,7 +52,7 @@ public class Example_2 {
 
         //todo 输出
         tEnv.toDataStream(tableApi, Row.class).print("api");
-        tEnv.toDataStream(sqlQuery, Row.class).print("sql");
+        //tEnv.toDataStream(sqlQuery, Row.class).print("sql");
 
         //解释
         //System.out.println(tableApi.explain());

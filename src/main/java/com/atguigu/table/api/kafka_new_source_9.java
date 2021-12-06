@@ -29,7 +29,7 @@ public class kafka_new_source_9 {
                         "'topic' = 'sensor'," +
                         "'properties.bootstrap.servers' = 'hadoop102:9092'," +
                         "'properties.group.id' = 'bigdata'," +
-                        "'format' = 'json'," + //接收到的kafka都是json格式
+                        "'format' = 'json'," + //接收到的kafka都是json格式或csv
                         "'json.ignore-parse-errors' = 'true'" +
                         ")");
 

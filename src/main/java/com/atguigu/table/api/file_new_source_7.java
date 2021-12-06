@@ -35,26 +35,9 @@ public class file_new_source_7 {
                         ")";
         tEnv.executeSql(sourceDDL);
 
-        /*//step-2 编写数据sink的sql语句
-        String sinkDDL =
-                "create table sensor_sink(id STRING," +
-                        "`timeStamp` BIGINT," +
-                        "temperature DOUBLE" +
-                        ") with (" +
-                        "'connector.type'='kafka'," +
-                        "'update-mode'='append'," +
-                        "'connector.version' = 'universal'," +
-                        "'connector.topic'='flink'," + //每个字段按,切分
-                        "'scan.startup.mode' = 'earliest-offset'," +
-                        "'connector.properties.bootstrap.servers'='hadoop102:9092'," +
-                        "'connector.startup-mode' = 'latest-offset'," +
-                        "'format' = 'csv'" +
-                        ")";*/
-
-
         Table resTable = tEnv.from("sensor_source")
                 .groupBy($("id"))
-                .select($("id"), $("timeStamp"), $("temperature"));
+                .select($("id"), $("id").count().as("cnt"));
         tEnv.toRetractStream(resTable, Row.class).print("cnt");
 
         env.execute();

@@ -17,6 +17,7 @@ import static org.apache.flink.table.api.Expressions.$;
  * @Create 2021年12月06日17:30 - 周一
  * @Describe 接收来自kafka的数据，数据必须是json格式
  *              {"id":"sensor_1","timeStamp":"2","temperature":"2"}
+ *              https://www.bilibili.com/video/BV1qy4y1q728?p=86&spm_id_from=pageDriver
  */
 public class kafka_old_source_8 {
     public static void main(String[] args) throws Exception {
@@ -39,11 +40,12 @@ public class kafka_old_source_8 {
                         .startFromLatest()
                         .property("group.id", "bigdata")
                         .property("bootstrap.servers", "hadoop102:9092,hadoop103:9092,hadoop104:9092"))
-                .withFormat(new Json())
+                .withFormat(new Json())//kafka那边是json格式，这里也可以写 new Csv()
                 .withSchema(schema)
-                .createTemporaryTable("sensor");
+                .createTemporaryTable("sensor_kafka");
 
-        Table table = tEnv.from("sensor")
+        //step-2 正式读取数据,from就说明是source
+        Table table = tEnv.from("sensor_kafka")
                 .groupBy($("id"))
                 .select($("id"), $("id").count().as("cnt"));
 

@@ -47,11 +47,18 @@ public class file_old_sink_10 {
                 .field("temperature", DataTypes.DOUBLE());
 
         tEnv.connect(new FileSystem().path("output/sink.txt"))
-                .withFormat(new Csv().fieldDelimiter(','))
+                .withFormat(new Csv())
                 .withSchema(schema)
                 .createTemporaryTable("sensor_sink");
 
-        resTable.executeInsert("sensor_sink");
 
+        resTable.executeInsert("sensor_sink");
+        /*
+        * explain
+        * env.execute()方法会去分析代码，生成一些 graph，但是我们代码中没有调用算子，所以会报错，可以直接不用
+        * 注意输出到文件的时候是不支持聚合写入的，因为有RetractStream会先删除之前的值再加上新的值，所以只能往后追
+        * 加的流式写入，更新式的流式写入是不行的
+        *
+        * */
     }
 }
