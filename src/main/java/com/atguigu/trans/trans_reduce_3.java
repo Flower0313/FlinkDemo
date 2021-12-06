@@ -13,7 +13,10 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
  * @ClassName FlinkDemo-trans_reduce_3
  * @Author Holden_—__——___———____————_____Xiao
  * @Create 2021年11月21日12:48 - 周日
- * @Describe
+ * @Describe reduce合并当前的元素和上次聚合的结果,产生一个新的值,返回的流中包含每一次聚合的结果,而不是只返回最后
+ *           一次聚合的最终结果,为什么还要把中间值保存下来呢?因为这是流式数据，是没有终点的,所以任何一个中间的聚合值
+ *           都是结果值
+ *
  */
 public class trans_reduce_3 {
     public static void main(String[] args) throws Exception {
@@ -39,7 +42,7 @@ public class trans_reduce_3 {
             public SensorReading reduce(SensorReading value1, SensorReading value2) throws Exception {
                 //第一个参数：因为已经按id分组了，所以这里填写value1或value2的id都一样
                 //第二个参数：因为要是最新的时间戳所以要填写value2的，因为每次reduce完的结果都填充在value1，新数据从value2进来
-                //第三个参数：比较逻辑
+                //第三个参数：比较逻辑,比较两个元素的最大值
                 return new SensorReading(value1.getId(), value2.getTimeStamp(), Math.max(value1.getTemperature(), value2.getTemperature()));
             }
         });

@@ -22,7 +22,7 @@ public class trans_1 {
 
         DataStream<String> source = env.readTextFile(inputPath);
 
-        //1.map，把读入的String转成长度输出
+        //TODO 1.1 map，把读入的String转成长度输出,消费一个元素产生一个元素,DStream->DStream
         DataStream<Integer> mapStream = source.map(new MapFunction<String, Integer>() {
             @Override
             public Integer map(String value) throws Exception {
@@ -31,7 +31,10 @@ public class trans_1 {
             }
         });
 
-        //2.flatmap,按逗号切分字段
+        //1.2 将map使用lambda的方式value->value.length 可以变成_.length,但是在java中要这样String::length
+        DataStream<Integer> mapStream2 = source.map(String::length);
+
+        //TODO 2.1 flatmap,按逗号切分字段,消费一个元素产生多个元素,DStream->DStream
         DataStream<String> flatMapStream = source.flatMap(new FlatMapFunction<String, String>() {
             @Override
             public void flatMap(String value, Collector<String> out) throws Exception {
@@ -42,8 +45,16 @@ public class trans_1 {
             }
         });
 
+        //2.2 使用lambda方式来运行
+        DataStream<String> flatMapStream2 = source.flatMap((value, out) -> {
+            for (String s : value.split(",")) {
+                out.collect(s);
+            }
+        });
 
-        //3.filter，筛选sensor_1开头的数据
+
+        //TODO 3.1 filter，筛选sensor_1开头的数据,FilterFunction接口只有唯一的方法,可以使用lambda表达式
+        //DStream->DStream
         DataStream<String> filterStream = source.filter(new FilterFunction<String>() {
             @Override
             public boolean filter(String value) throws Exception {
@@ -51,13 +62,13 @@ public class trans_1 {
             }
         });
 
-
+        //3.2 将匿名实现类改写为lambda表达式
+        DataStream<String> filterStream2 = source.filter((value) -> value.startsWith("sensor_1"));
 
 
         mapStream.print("map");
         flatMapStream.print("flatMap");
         filterStream.print("filter");
-
         env.execute();
 
     }

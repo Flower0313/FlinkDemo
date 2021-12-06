@@ -17,10 +17,11 @@ public class source_diy_4 {
     public static void main(String[] args) throws Exception {
         StreamExecutionEnvironment env =
                 StreamExecutionEnvironment.getExecutionEnvironment();
+        env.setParallelism(1);
 
         DataStream<SensorReading> source = env.addSource(new MySensorSource());
 
-        source.print();
+        source.print("diy-source");
 
         env.execute();
     }
@@ -50,11 +51,11 @@ class MySensorSource implements SourceFunction<SensorReading> {
             for (String sId : sensorTempMap.keySet()) {
                 //在当前温度基础上随机波动
                 Double newTemp = sensorTempMap.get(sId) + random.nextGaussian();
-                sensorTempMap.put(sId,newTemp);
-                ctx.collect(new SensorReading(sId,System.currentTimeMillis(),newTemp));
+                sensorTempMap.put(sId, newTemp);
+                ctx.collect(new SensorReading(sId, System.currentTimeMillis(), newTemp));
             }
             //一秒钟更新一次
-            Thread.sleep(1000L);
+            Thread.sleep(2000L);
         }
     }
 

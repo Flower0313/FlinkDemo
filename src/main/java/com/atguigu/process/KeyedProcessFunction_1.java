@@ -41,6 +41,7 @@ public class KeyedProcessFunction_1 {
         env.execute();
     }
 
+    //泛型参数一是key(keyBy分组的那个key)，参数二是输入类型，参数三是输出类型
     public static class MyProcess extends KeyedProcessFunction<String, SensorReading, Integer> {
 
         private ValueState<Long> tsTimerState;
@@ -59,11 +60,12 @@ public class KeyedProcessFunction_1 {
             //上下文
             ctx.timestamp();//时间戳
             ctx.getCurrentKey();//当前key
+            //ctx.output();//里面可以传入你的侧输出流,若你涉及分流操作
             //ctx.timerService().currentProcessingTime();//获取Processing Time时间语义
             //ctx.timerService().currentWatermark();//获取Event Time时间语义
             //tsTimerState.update(ctx.timerService().currentProcessingTime());//保存当前的时间戳
-            System.out.println(ctx.timerService().currentProcessingTime());
-            ctx.timerService().registerProcessingTimeTimer(ctx.timerService().currentProcessingTime());//基于当前时间后1秒执行
+            //System.out.println(ctx.timerService().currentProcessingTime());
+            ctx.timerService().registerProcessingTimeTimer(ctx.timerService().currentProcessingTime());//基于当前机器时间后1秒执行
             //ctx.timerService().registerEventTimeTimer((value.getTimeStamp() + 10) * 3000L);//基于当前某个事件时间戳后10秒执行闹钟
             //ctx.timerService().deleteEventTimeTimer((value.getTimeStamp() + 10) * 2000L);//在闹钟执行10秒之后停止执行
             //ctx.timerService().deleteProcessingTimeTimer(tsTimerState.value()+10L);//这样下个时间戳进来就还可以获取到上次的时间戳

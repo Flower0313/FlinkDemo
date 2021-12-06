@@ -48,7 +48,6 @@ public class countwindow_2 {
 
                     @Override
                     public Double getResult(Tuple2<Double, Integer> accumulator) {
-                        System.out.println("hello");
                         return accumulator.f0 / accumulator.f1;
                     }
 

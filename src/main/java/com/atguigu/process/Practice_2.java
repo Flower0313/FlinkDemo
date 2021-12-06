@@ -17,7 +17,7 @@ import org.apache.flink.util.Collector;
  * @Create 2021年11月26日23:07 - 周五
  * @Describe 监控温度传感器的温度值，如果在10秒内连续上升就报警
  */
-public class Practice_1 {
+public class Practice_2 {
     public static void main(String[] args) throws Exception {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(1);

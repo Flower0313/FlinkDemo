@@ -1,7 +1,5 @@
 package com.atguigu.state;
 
-import com.atguigu.source.SensorReading;
-import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.state.ListState;
 import org.apache.flink.api.common.state.ListStateDescriptor;
 import org.apache.flink.api.common.typeinfo.TypeHint;
@@ -10,10 +8,7 @@ import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.runtime.state.FunctionInitializationContext;
 import org.apache.flink.runtime.state.FunctionSnapshotContext;
 import org.apache.flink.streaming.api.checkpoint.CheckpointedFunction;
-import org.apache.flink.streaming.api.checkpoint.ListCheckpointed;
-import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSink;
-import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.sink.SinkFunction;
 
@@ -29,7 +24,7 @@ import java.util.List;
 public class OperatorState_1 {
     public static void main(String[] args) throws Exception {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        env.setParallelism(4);
+        env.setParallelism(1);
 
         DataStreamSink<Tuple2<String, Long>> dataStream = env.fromElements(
                         Tuple2.of("a", 3L),
@@ -52,7 +47,7 @@ public class OperatorState_1 {
          * */
         private final int threshold; //写出临界值
         private transient ListState<Tuple2<String, Long>> checkpointedState;
-        private List<Tuple2<String, Long>> bufferedElements = new ArrayList<>();
+        private final List<Tuple2<String, Long>> bufferedElements = new ArrayList<>();
 
         public BufferingSink(int threshold) {
             this.threshold = threshold;
@@ -65,7 +60,7 @@ public class OperatorState_1 {
             System.out.println("initializeState");
             //分发器
             ListStateDescriptor<Tuple2<String, Long>> descriptor =
-                    new ListStateDescriptor<Tuple2<String, Long>>("bufferedSinkState",//别名
+                    new ListStateDescriptor<Tuple2<String, Long>>("buffered-elements",//别名
                             TypeInformation.of(new TypeHint<Tuple2<String, Long>>() { //TypeInformation是类型消息
                             }));
 
@@ -80,6 +75,11 @@ public class OperatorState_1 {
 
         }
 
+        /**
+         * 在进行checkpoint时会调用
+         * @param context
+         * @throws Exception
+         */
         @Override
         public void snapshotState(FunctionSnapshotContext context) throws Exception {
             checkpointedState.clear();

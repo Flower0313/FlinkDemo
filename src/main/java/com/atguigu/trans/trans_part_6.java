@@ -14,7 +14,7 @@ public class trans_part_6 {
     public static void main(String[] args) throws Exception {
         StreamExecutionEnvironment env =
                 StreamExecutionEnvironment.getExecutionEnvironment();
-        env.setParallelism(4);
+        env.setParallelism(3);
 
         String inputPath = "T:\\ShangGuiGu\\FlinkDemo\\src\\main\\resources\\sensor.txt";
 
@@ -24,7 +24,7 @@ public class trans_part_6 {
             String[] fields = line.split(",");
             return new SensorReading(fields[0], new Long(fields[1]), new Double(fields[2]));
         });
-        dataStream.print("origin");
+        //dataStream.print("origin");
 
         //dataStream.print("input");
 
@@ -34,10 +34,10 @@ public class trans_part_6 {
 
 
         //2.KeyBy按照hash分区，相同key一定在一个分区上
-        dataStream.keyBy(SensorReading::getId).print("keyBy");
+        //dataStream.keyBy(SensorReading::getId).print("keyBy");
 
         //3.global 把所有数据放到第一个分区中
-        //dataStream.global().print("global");
+        dataStream.global().print("global");
 
         //4.rebalance,底层是轮询策略，前后两个任务并行度不一样就默认用这个方式
         //dataStream.rebalance().print("rebalance");
@@ -45,3 +45,5 @@ public class trans_part_6 {
         env.execute();
     }
 }
+
+

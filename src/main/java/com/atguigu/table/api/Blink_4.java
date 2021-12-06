@@ -1,4 +1,4 @@
-package com.atguigu.table;
+package com.atguigu.table.api;
 
 import com.atguigu.source.SensorReading;
 import org.apache.flink.api.java.ExecutionEnvironment;
@@ -18,11 +18,8 @@ public class Blink_4 {
     public static void main(String[] args) throws Exception {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(1);
-
         String inputPath = "T:\\ShangGuiGu\\FlinkDemo\\src\\main\\resources\\sensor.txt";
-
         DataStream<String> inputStream = env.readTextFile(inputPath);
-
         DataStream<SensorReading> dataStream = inputStream.map(line -> {
             String[] fields = line.split(",");
             return new SensorReading(fields[0], new Long(fields[1]), new Double(fields[2]));
@@ -42,10 +39,8 @@ public class Blink_4 {
                 .useBlinkPlanner()
                 .inBatchMode()
                 .build();
-        TableEnvironment batchEnv = TableEnvironment.create(blinkBatchSetting);//不需要传env了,因为env是stream的
-
-
-
+        //attention 不需要传env了,因为env是属于流处理的
+        TableEnvironment batchEnv = TableEnvironment.create(blinkBatchSetting);
 
         env.execute();
     }

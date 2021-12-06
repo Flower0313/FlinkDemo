@@ -1,4 +1,4 @@
-package com.atguigu.table;
+package com.atguigu.table.api;
 
 import com.atguigu.source.SensorReading;
 import org.apache.flink.streaming.api.datastream.DataStream;
@@ -22,11 +22,8 @@ public class BasicUse_5 {
     public static void main(String[] args) throws Exception {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(1);
-
         String inputPath = "T:\\ShangGuiGu\\FlinkDemo\\src\\main\\resources\\sensor.txt";
-
         DataStream<String> inputStream = env.readTextFile(inputPath);
-
         DataStream<SensorReading> dataStream = inputStream.map(line -> {
             String[] fields = line.split(",");
             return new SensorReading(fields[0], new Long(fields[1]), new Double(fields[2]));
@@ -34,15 +31,17 @@ public class BasicUse_5 {
 
 
         //todo 1.创建表的执行环境
-        StreamTableEnvironment tableEnv = StreamTableEnvironment.create(env, EnvironmentSettings.newInstance().useBlinkPlanner().inStreamingMode().build());
+        StreamTableEnvironment tableEnv = StreamTableEnvironment
+                .create(env, EnvironmentSettings.newInstance().useBlinkPlanner().inStreamingMode().build());
 
         //todo 2.创建表：将流转换成动态表，表的字段从pojo属性名自动抽取
         Table inputTable = tableEnv.fromDataStream(dataStream);
 
         //todo 3.对动态表进行查询
-        Table resultTable = inputTable.select($("id"), $("timeStamp"), $("temperature"));
+        Table resultTable = inputTable
+                .select($("id"), $("timeStamp"), $("temperature"));
 
-        tableEnv.createTemporaryView("Sensor",dataStream);
+        tableEnv.createTemporaryView("Sensor", dataStream);
         Table sqlTable = tableEnv.sqlQuery("select id,count(1) as cnt from Sensor group by id ");
 
         //若涉及到数据的更新和改变，要用到撤回流，多了个boolean标记

@@ -35,7 +35,7 @@ public class sink_kafka_1 {
             return new SensorReading(fields[0], new Long(fields[1]), new Double(fields[2])).toString();
         });
 
-        FlinkKafkaProducer<String> myProducer = new FlinkKafkaProducer<>("sensor", new SimpleStringSchema(), properties);
+        FlinkKafkaProducer<String> myProducer = new FlinkKafkaProducer<>("flink", new SimpleStringSchema(), properties);
 
         //将sensor.txt的数据发往kafka
         dataStream.addSink(myProducer);

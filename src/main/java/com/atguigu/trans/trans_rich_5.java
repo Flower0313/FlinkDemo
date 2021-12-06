@@ -25,7 +25,7 @@ public class trans_rich_5 {
     public static void main(String[] args) throws Exception {
         StreamExecutionEnvironment env =
                 StreamExecutionEnvironment.getExecutionEnvironment();
-        env.setParallelism(1);
+        env.setParallelism(3);
 
         String inputPath = "T:\\ShangGuiGu\\FlinkDemo\\src\\main\\resources\\sensor.txt";
 
@@ -36,7 +36,7 @@ public class trans_rich_5 {
             return new SensorReading(fields[0], new Long(fields[1]), new Double(fields[2]));
         });
 
-        DataStream<Tuple2<String, Integer>> resMap = dataStream.map(new RichMap());
+        DataStream<Tuple2<String, String>> resMap = dataStream.map(new RichMap());
 
         resMap.print();
         env.execute();
@@ -44,7 +44,7 @@ public class trans_rich_5 {
 }
 
 //普通函数
-class NormalMap implements MapFunction<SensorReading,Tuple2<String,Integer>>{
+class NormalMap implements MapFunction<SensorReading, Tuple2<String, Integer>> {
     @Override
     public Tuple2<String, Integer> map(SensorReading value) throws Exception {
         return new Tuple2<>(value.getId(), value.getId().length());//返回的参数类型决定R，调用map方法的对象决定T
@@ -52,20 +52,24 @@ class NormalMap implements MapFunction<SensorReading,Tuple2<String,Integer>>{
 }
 
 //富函数
-class RichMap extends RichMapFunction<SensorReading, Tuple2<String, Integer>> {
-
-
-
+class RichMap extends RichMapFunction<SensorReading, Tuple2<String, String>> {
     @Override
-    public Tuple2<String, Integer> map(SensorReading value) throws Exception {
+    public Tuple2<String, String> map(SensorReading value) throws Exception {
         //可以获取subtask执行的序号
-        return new Tuple2<>(value.getId(),getRuntimeContext().getIndexOfThisSubtask());
+        return new Tuple2<>(value.getId(), "subtask-" + getRuntimeContext().getIndexOfThisSubtask());
     }
 
+    /**
+     * 初始化工作，一般可以用来连接数据库，不然在map中就不用来一次连接一次
+     * 每个并行度分区都执行一次
+     * 若setParallelism(3)那就是执行3次
+     *
+     * @param parameters
+     * @throws Exception
+     */
     @Override
     public void open(Configuration parameters) throws Exception {
-        //初始化工作，一般可以用来连接数据库，不然在map中就不用来一次连接一次
-        System.out.println("连接成功！");//每个分区都执行一次
+        System.out.println("连接成功！");
     }
 
     @Override

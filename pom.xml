@@ -13,6 +13,7 @@
         <maven.compiler.target>8</maven.compiler.target>
         <flink.version>1.13.3</flink.version>
         <scala.version>2.12</scala.version>
+        <fastjson.version>1.2.47</fastjson.version>
     </properties>
 
     <dependencies>
@@ -26,6 +27,12 @@
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-streaming-java_${scala.version}</artifactId>
             <version>${flink.version}</version>
+            <exclusions>
+                <exclusion>
+                    <artifactId>slf4j-api</artifactId>
+                    <groupId>org.slf4j</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <!--flink中scala版本-->
         <dependency>
@@ -46,18 +53,32 @@
             <artifactId>flink-connector-kafka_2.12</artifactId>
             <version>${flink.version}</version>
         </dependency>
+
         <!--Kafka客户端依赖-->
         <dependency>
             <groupId>org.apache.kafka</groupId>
             <artifactId>kafka-clients</artifactId>
             <version>2.4.1</version>
+            <exclusions>
+                <exclusion>
+                    <artifactId>slf4j-api</artifactId>
+                    <groupId>org.slf4j</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
-        <!--jdbc连接依赖-->
-        <!--<dependency>
+        <!--jdbc和mysql-->
+        <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-connector-jdbc_2.12</artifactId>
             <version>${flink.version}</version>
-        </dependency>-->
+        </dependency>
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>5.1.47</version>
+        </dependency>
+
+
         <!--RocksDB-->
         <dependency>
             <groupId>org.apache.flink</groupId>
@@ -75,6 +96,12 @@
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-table-planner-blink_${scala.version}</artifactId>
             <version>${flink.version}</version>
+            <exclusions>
+                <exclusion>
+                    <artifactId>slf4j-api</artifactId>
+                    <groupId>org.slf4j</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
@@ -86,7 +113,55 @@
             <artifactId>flink-json</artifactId>
             <version>${flink.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-table-common</artifactId>
+            <version>${flink.version}</version>
+        </dependency>
+
+        <!--hdfs读取文件-->
+        <!--<dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-client</artifactId>
+            <version>3.1.3</version>
+        </dependency>-->
+
+        <!--redis-->
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-connector-redis_2.11</artifactId>
+            <version>1.1.5</version>
+            <exclusions>
+                <exclusion>
+                    <artifactId>slf4j-api</artifactId>
+                    <groupId>org.slf4j</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>slf4j-log4j12</artifactId>
+                    <groupId>org.slf4j</groupId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+
+        <!--ElasticSearch 6.x-->
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-connector-elasticsearch6_2.12</artifactId>
+            <version>${flink.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-to-slf4j</artifactId>
+            <version>2.14.0</version>
+        </dependency>
+
+        <!--alibaba-->
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>fastjson</artifactId>
+            <version>${fastjson.version}</version>
+        </dependency>
 
     </dependencies>
-
 </project>
