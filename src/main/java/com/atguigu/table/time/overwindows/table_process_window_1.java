@@ -16,7 +16,7 @@ import static org.apache.flink.table.api.Expressions.*;
  * @ClassName FlinkDemo-sql_process_window_4
  * @Author Holden_—__——___———____————_____Xiao
  * @Create 2021年12月07日14:08 - 周二
- * @Describe https://nightlies.apache.org/flink/flink-docs-release-1.13/zh/docs/dev/table/tableapi/
+ * @Describe 官方文档:https://nightlies.apache.org/flink/flink-docs-release-1.13/zh/docs/dev/table/tableapi/
  */
 public class table_process_window_1 {
     public static void main(String[] args) throws Exception {

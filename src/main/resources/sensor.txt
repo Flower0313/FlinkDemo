@@ -5,6 +5,9 @@ sensor_1,4,4
 sensor_1,5,5
 sensor_1,22,6
 sensor_1,23,99
-sensor_2,25,13
-sensor_2,32,40.2
-sensor_3,40,42
+sensor_13,25,13
+sensor_13,32,40.2
+sensor_3,40,35
+sensor_222,50,36.2
+sensor_222,140,37.1
+sensor_333,220,38.6

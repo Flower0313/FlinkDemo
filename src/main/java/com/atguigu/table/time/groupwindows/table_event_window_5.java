@@ -40,8 +40,10 @@ public class table_event_window_5 {
                 new SensorReading("sensor_2", 6000L, 60D)).assignTimestampsAndWatermarks(WatermarkStrategy.<SensorReading>forBoundedOutOfOrderness(Duration.ofSeconds(2)).withTimestampAssigner(((element, recordTimestamp) -> element.getTimeStamp() * 1000L)));
 
 
+        //step-3. 在环境中注册表
         Table table = tableEnv.fromDataStream(dataStream, $("id"), $("timeStamp"), $("temperature"), $("dt").rowtime());
 
+        //step-4. TableAPI查询
         Table resTable = table.window(Tumble.over(
                                 lit(10).seconds())
                         .on($("dt"))
@@ -50,7 +52,6 @@ public class table_event_window_5 {
                 .select($("id"), $("id").count().as("cnt"), $("temperature").avg().as("tAvg"), $("tw").end());
 
         table.execute().print();
-
         env.execute();
     }
 }

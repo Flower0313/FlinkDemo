@@ -44,7 +44,6 @@ public class sql_process_window_2 {
                         "from sensor");
 
         table.execute().print();
-
         env.execute();
     }
 }

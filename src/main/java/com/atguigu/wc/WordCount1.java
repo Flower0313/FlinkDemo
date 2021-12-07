@@ -33,6 +33,7 @@ public class WordCount1 {
         wordCountDataSet.print();
     }
 
+
     //自定义类，声明输入类型和输出类型
     public static class MyFlatMapper implements FlatMapFunction<String, Tuple2<String, Integer>> {
         @Override
