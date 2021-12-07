@@ -3,7 +3,7 @@ package com.atguigu.hive;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.SqlDialect;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
-import org.apache.flink.table.catalog.hive.HiveCatalog;
+//import org.apache.flink.table.catalog.hive.HiveCatalog;
 
 /**
  * @ClassName FlinkDemo-hive_1
@@ -13,7 +13,7 @@ import org.apache.flink.table.catalog.hive.HiveCatalog;
  */
 public class hive_1 {
     public static void main(String[] args) {
-        System.setProperty("HADOOP_USER_NAME", "holdenxiao");
+        /*System.setProperty("HADOOP_USER_NAME", "holdenxiao");
 
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(1);
@@ -35,7 +35,7 @@ public class hive_1 {
         //指定SQL语法为Hive语法
         tEnv.getConfig().setSqlDialect(SqlDialect.HIVE);
 
-        tEnv.sqlQuery("select * from action").execute().print();
+        tEnv.sqlQuery("select * from action").execute().print();*/
 
     }
 }

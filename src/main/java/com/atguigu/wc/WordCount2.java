@@ -19,6 +19,7 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
  */
 public class WordCount2 {
     public static void main(String[] args) throws Exception {
+        //todo 流式
         StreamExecutionEnvironment env =
                 StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(1);

@@ -16,7 +16,7 @@ import org.apache.flink.api.java.tuple.Tuple2;
  */
 public class WordCount1 {
     public static void main(String[] args) throws Exception {
-        //todo 创建执行环境
+        //todo 创建执行环境(批次)
         ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
 
         //todo 从文件读取数据
