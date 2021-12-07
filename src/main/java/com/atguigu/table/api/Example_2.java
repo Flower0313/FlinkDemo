@@ -39,7 +39,7 @@ public class Example_2 {
         //todo 注册sensor临时表
         tEnv.createTemporaryView("sensor", dataStream);
 
-        //todo Table API
+        //todo Table API,将临时视图中的DataStream转换为Table
         Table tableApi = tEnv.from("sensor")
                 .select($("id"), $("temperature"))
                 .where($("id")

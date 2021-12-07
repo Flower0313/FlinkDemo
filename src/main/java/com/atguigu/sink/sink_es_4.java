@@ -59,7 +59,6 @@ public class sink_es_4 {
         //批量请求的配置;这指示接收器在每个元素之后发出，否则它们将被缓冲
         //esSinkBuilder.setBulkFlushMaxActions(1);
 
-
         env.execute();
     }
 }

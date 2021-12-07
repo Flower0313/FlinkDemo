@@ -1,6 +1,7 @@
 package com.atguigu.table.api;
 
 import com.atguigu.source.SensorReading;
+import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.DataTypes;
@@ -18,7 +19,7 @@ import static org.apache.flink.table.api.Expressions.$;
  * @Create 2021年11月28日21:46 - 周日
  * @Describe
  */
-public class BasicUse_5 {
+public class StreamToData {
     public static void main(String[] args) throws Exception {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(1);
@@ -29,25 +30,22 @@ public class BasicUse_5 {
             return new SensorReading(fields[0], new Long(fields[1]), new Double(fields[2]));
         });
 
+        StreamTableEnvironment tEnv = StreamTableEnvironment.create(env);
 
-        //todo 1.创建表的执行环境
-        StreamTableEnvironment tableEnv = StreamTableEnvironment
-                .create(env, EnvironmentSettings.newInstance().useBlinkPlanner().inStreamingMode().build());
+        //step-1 DataStream -> Table
+        Table sensorTable1 = tEnv.fromDataStream(inputStream);
+        Table sensorTable2 = tEnv.fromDataStream(inputStream, "id,timeStamp as ts,temperature");
 
-        //todo 2.创建表：将流转换成动态表，表的字段从pojo属性名自动抽取
-        Table inputTable = tableEnv.fromDataStream(dataStream);
+        //step-2 Table -> DataStream
+        DataStream<Row> resStream1 = tEnv.toAppendStream(sensorTable1, Row.class);
+        DataStream<Tuple2<Boolean, Row>> resStream2 = tEnv.toRetractStream(sensorTable1, Row.class);
 
-        //todo 3.对动态表进行查询
-        Table resultTable = inputTable
-                .select($("id"), $("timeStamp"), $("temperature"));
+        //step-3 基于DataStream临时视图
+        tEnv.createTemporaryView("sensorView1", dataStream);
+        tEnv.createTemporaryView("sensorView1", dataStream, "id,temperature as ts");
 
-        tableEnv.createTemporaryView("Sensor", dataStream);
-        Table sqlTable = tableEnv.sqlQuery("select id,count(1) as cnt from Sensor group by id ");
-
-        //若涉及到数据的更新和改变，要用到撤回流，多了个boolean标记
-        //tableEnv.toAppendStream(resultTable, Row.class).print("table API");
-        tableEnv.toRetractStream(sqlTable, Row.class).print("Sql");
-
+        //step-4 基于Table临时视图
+        tEnv.createTemporaryView("sensorView2", sensorTable2);
 
         env.execute();
     }

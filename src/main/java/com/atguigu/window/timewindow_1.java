@@ -36,7 +36,7 @@ public class timewindow_1 {
 
 
         //这里需要用socket流来读取数据，因为如果读文件数据，没有15秒程序就结束了，窗口也消失了
-        DataStreamSource<String> inputStream = env.socketTextStream("hadoop102", 7777);
+        DataStreamSource<String> inputStream = env.socketTextStream("hadoop102", 31313);
 
         DataStream<SensorReading> dataStream = inputStream.map(line -> {
             String[] fields = line.split(",");

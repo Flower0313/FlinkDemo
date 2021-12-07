@@ -46,7 +46,7 @@ public class Example_1 {
         //TODO 创建表的执行环境,参数二若不传,默认调用第3个,Flink Batch Query
         StreamTableEnvironment tEnv = StreamTableEnvironment.create(env);
 
-        //table的数据来自于dataStream
+        //TODO table的数据来自于dataStream,将DataStream转换为Table
         Table table = tEnv.fromDataStream(dataStream);
 
         //step 使用Table API

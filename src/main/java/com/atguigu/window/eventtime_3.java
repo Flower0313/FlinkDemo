@@ -33,12 +33,12 @@ public class eventtime_3 {
         DataStream<SensorReading> dataStream = inputStream.map(line -> {
             String[] fields = line.split(",");
             return new SensorReading(fields[0], new Long(fields[1]), new Double(fields[2]));
-        }).assignTimestampsAndWatermarks(WatermarkStrategy
-                //乱序使用forBoundedOutOfOrderness，顺序使用forMonotonousTimestamps
-                .<SensorReading>forBoundedOutOfOrderness(Duration.ofSeconds(0))//延迟时间
+        }).assignTimestampsAndWatermarks(WatermarkStrategy//explain 告诉flink哪个是时间戳
+                //乱序使用forBoundedOutOfOrderness，顺序使用forMonotonousTimestamps()
+                                                                                                            .<SensorReading>forBoundedOutOfOrderness(Duration.ofSeconds(2))//延迟时间
                 //x就是SensorReading类型的,y就是Long类型的recordTimestamp,以毫秒为单位,所以要*1000
                 .withTimestampAssigner(new SerializableTimestampAssigner<SensorReading>() {//这里将自定义SensorReading类型传入进去
-                    @Override
+                    @Override//抽取时间戳
                     public long extractTimestamp(SensorReading element, long recordTimestamp) {
                         //获取事件自带的时间戳来作为水位线,*1000是必须要加的
                         return element.getTimeStamp() * 1000L;
