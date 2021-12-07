@@ -28,7 +28,6 @@ public class sql_base_1 {
                         new SensorReading("sensor_1", 5000L, 50D),
                         new SensorReading("sensor_2", 6000L, 60D));
 
-
         //step-2 使用sql查询未注册的表
         Table inputTable = tEnv.fromDataStream(waterSensorStream);
         Table resTable = tEnv.sqlQuery("select * from " + inputTable + " where id='sensor_1'");

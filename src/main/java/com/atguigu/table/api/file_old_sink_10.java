@@ -46,6 +46,7 @@ public class file_old_sink_10 {
                 .field("timeStamp", DataTypes.BIGINT())
                 .field("temperature", DataTypes.DOUBLE());
 
+        //attention 使用临时的catalog
         tEnv.connect(new FileSystem().path("output/sink.txt"))
                 .withFormat(new Csv())
                 .withSchema(schema)
