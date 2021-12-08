@@ -35,7 +35,7 @@ public class trans_keyBy_2 {
             return new SensorReading(fields[0], new Long(fields[1]), new Double(fields[2]));
         });
 
-        dataStream.print("origin");
+        //dataStream.print("origin");
 
         //根据id分组
         //dataStream.keyBy("id"); //方式一：已过期
@@ -58,7 +58,6 @@ public class trans_keyBy_2 {
         //组内来一条数据就比一次，每组各自统计各自的
         //DataStream<SensorReading> resultStream = kyStream.maxBy("temperature");
 
-        kyStream.print("keyBy");
         env.execute();
     }
 }

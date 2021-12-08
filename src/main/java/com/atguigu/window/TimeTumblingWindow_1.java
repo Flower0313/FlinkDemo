@@ -25,9 +25,9 @@ import org.apache.flink.util.OutputTag;
  * @ClassName FlinkDemo-window_1
  * @Author Holden_—__——___———____————_____Xiao
  * @Create 2021年11月21日21:03 - 周日
- * @Describe 时间窗口
+ * @Describe 时间滚动窗口
  */
-public class timewindow_1 {
+public class TimeTumblingWindow_1 {
     public static void main(String[] args) throws Exception {
         StreamExecutionEnvironment env =
                 StreamExecutionEnvironment.getExecutionEnvironment();
@@ -42,7 +42,7 @@ public class timewindow_1 {
             String[] fields = line.split(",");
             return new SensorReading(fields[0], new Long(fields[1]), new Double(fields[2]));
         });
-        //1.增量聚合窗口:方式一
+        //step-1.基于时间的滚动"聚合"窗口
         dataStream.keyBy(SensorReading::getId)//虽然分了区，但还是一个线程，每个分区都会输出自己的统计值
                 //加入你设置了多并行度，那么每个分区都可以分配一个线程并行运行，但他们数据是可以共通的
                 .window(TumblingProcessingTimeWindows.of(Time.seconds(5)))
@@ -69,10 +69,11 @@ public class timewindow_1 {
                         return a + b;//涉及分区合并，这里不涉及分区合并
                     }
                 });
+
         //dataStream.keyBy(SensorReading::getId).window(EventTimeSessionWindows.withGap(Time.minutes(5)));//方式二
         //dataStream.keyBy(SensorReading::getId).countWindow(5);
 
-        //2.全局聚合窗口
+        //step-2.基于时间的滚动的"全"窗口
         dataStream.keyBy(SensorReading::getId)
                 .window(TumblingProcessingTimeWindows.of(Time.seconds(5)))
                 .apply(new WindowFunction<SensorReading, Tuple3<String, Long, Integer>, String, TimeWindow>() {
@@ -81,10 +82,10 @@ public class timewindow_1 {
                         String id = s.split(",")[0];//获取到id
                         Long windowEnd = window.getEnd();//每个窗口结束的时间戳
                         Integer count = IteratorUtils.toList(input.iterator()).size();//每组的统计个数
-                        //相比增量窗口，可以拿到更多信息
+                        //attention 相比增量窗口，可以拿到更多信息
                         out.collect(new Tuple3<>(id, windowEnd, count));
                     }
-                });
+                }).print();
         //从这可以看出，分区后的数据统计值是分区各算个的，但是他们还是处于一个线程中的，不是并行
 
         //3.其他API
@@ -103,10 +104,11 @@ public class timewindow_1 {
                 .sum("temperature");
 
         //取出正常窗口的数据
-        sumStream.print();
+        //sumStream.print();
         //取出迟到后被写入到侧输出流数据
-        sumStream.getSideOutput(lateTag).print("late");
+        //sumStream.getSideOutput(lateTag).print("late");
         /*
+        * Q&A!
         * Q：如何定义迟到数据?
         * A：迟到是一个相对概念，假设一个数据在8-9点产生，所以这个数据本身就是属于8-9点这个窗口的，
         *    但它9-10点才过来，所以它算一个迟到数据而不是算9-10点的窗口数据。

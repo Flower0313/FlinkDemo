@@ -20,7 +20,7 @@ import java.time.Duration;
  * @Create 2021年11月22日19:26 - 周一
  * @Describe 事件时间Event Time(1.12后默认)
  */
-public class eventtime_3 {
+public class EventTime_4 {
     public static void main(String[] args) throws Exception {
         StreamExecutionEnvironment env =
                 StreamExecutionEnvironment.getExecutionEnvironment();
