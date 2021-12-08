@@ -31,13 +31,16 @@ public class process_3 {
         });
 
         /*
-        * 这个证明process可以作用于DataStream也可以作用于KeyedStream
-        * */
+         * Explain
+         * 这个证明process可以作用于DataStream也可以作用于KeyedStream
+         * 泛型参数1是input的类型
+         * 泛型参数2是output的类型
+         * */
         dataStream.process(new ProcessFunction<SensorReading, Object>() {
             @Override
             public void processElement(SensorReading value, ProcessFunction<SensorReading,
                     Object>.Context ctx, Collector<Object> out) throws Exception {
-                out.collect(new Tuple2<>(value.getId(),value.getTemperature()));
+                out.collect(new Tuple2<>(value.getId(), value.getTemperature()));
 
             }
         }).print("before-keyBy");
@@ -45,7 +48,7 @@ public class process_3 {
         dataStream.keyBy(SensorReading::getId).process(new ProcessFunction<SensorReading, Object>() {
             @Override
             public void processElement(SensorReading value, ProcessFunction<SensorReading, Object>.Context ctx, Collector<Object> out) throws Exception {
-                out.collect(new Tuple2<>(value.getId(),value.getTemperature()));
+                out.collect(new Tuple2<>(value.getId(), value.getTemperature()));
             }
         }).print("after-keyBy");
 

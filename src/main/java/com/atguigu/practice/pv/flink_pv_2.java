@@ -1,29 +1,26 @@
 package com.atguigu.practice.pv;
 
 import com.atguigu.bean.UserBehavior;
-import org.apache.flink.api.common.typeinfo.Types;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
+import org.apache.flink.streaming.api.functions.ProcessFunction;
+import org.apache.flink.util.Collector;
 
 import static com.atguigu.common.CommonEnv.PV_SOURCE;
 
+
 /**
- * @ClassName FlinkDemo-flink_pv_1
+ * @ClassName FlinkDemo-flink_pv_2
  * @Author Holden_—__——___———____————_____Xiao
- * @Create 2021年12月08日1:02 - 周三
- * @Describe pv实现方式一
+ * @Create 2021年12月08日8:57 - 周三
+ * @Describe pv实现方式二
  */
-public class flink_pv_1 {
+public class flink_pv_2 {
     public static void main(String[] args) throws Exception {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(1);
 
-        /*
-         * Attention
-         * 注意使用匿名实现方式并且使用了泛型，返回的数据类型需要使用returns(Types.XX)来明确告诉flink返回来,
-         * 但使用方法的时候就不需要指定returns,
-         * 这里我们返回的Tuple2<String,Long>就使用了泛型,所以要指定returns(Types.STRING,Types.LONG)
-         * */
         env.readTextFile(PV_SOURCE)
                 .map(line -> {
                     String[] split = line.split(",");
@@ -35,13 +32,17 @@ public class flink_pv_1 {
                             Long.valueOf(split[4])
                     );
                 }).filter(behavior -> "pv".equals(behavior.getBehavior()))
-                .map(behavior -> {
-                    return Tuple2.of("pv", 1L);
-                }).returns(Types.TUPLE(Types.STRING, Types.LONG))
-                .keyBy(value -> value.f0)
-                .sum(1)//对元组索引为1的元素叠加,也就是将1相加
-                .print("test");
+                .keyBy(UserBehavior::getBehavior)
+                .process(new KeyedProcessFunction<String, UserBehavior, String>() {
+                    //定义局部变量,仅存在内存
+                    long count = 0;
 
+                    @Override
+                    public void processElement(UserBehavior value, KeyedProcessFunction<String, UserBehavior, String>.Context ctx, Collector<String> out) throws Exception {
+                        count++;
+                        out.collect("当前pv数:" + count);
+                    }
+                }).print();
         env.execute();
     }
 }

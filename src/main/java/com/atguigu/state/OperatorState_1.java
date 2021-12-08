@@ -46,7 +46,7 @@ public class OperatorState_1 {
          * 其序列化和反序列化由Flink框架提供支持，无须用户感知、干预
          * */
         private final int threshold; //写出临界值
-        private transient ListState<Tuple2<String, Long>> checkpointedState;
+        private transient ListState<Tuple2<String, Long>> checkPointedState;
         private final List<Tuple2<String, Long>> bufferedElements = new ArrayList<>();
 
         public BufferingSink(int threshold) {
@@ -56,7 +56,11 @@ public class OperatorState_1 {
 
         @Override
         public void initializeState(FunctionInitializationContext context) throws Exception {
-            //每个并行任务都会执行且只执行一次
+            /*
+            * initializeState 方法接收一个 FunctionInitializationContext 参数，会用来初始化 non-keyed
+            * state 的 “容器”。这些容器是一个 ListState 用于在 checkpoint 时保存 non-keyed state 对象。
+            * attention 每个并行任务都会执行且只执行一次
+            * */
             System.out.println("initializeState");
             //分发器
             ListStateDescriptor<Tuple2<String, Long>> descriptor =
@@ -64,10 +68,10 @@ public class OperatorState_1 {
                             TypeInformation.of(new TypeHint<Tuple2<String, Long>>() { //TypeInformation是类型消息
                             }));
 
-            checkpointedState = context.getOperatorStateStore().getListState(descriptor);
+            checkPointedState = context.getOperatorStateStore().getListState(descriptor);
 
             if (context.isRestored()) {//第一次执行程序是不会进来的
-                for (Tuple2<String, Long> element : checkpointedState.get()) {
+                for (Tuple2<String, Long> element : checkPointedState.get()) {
                     bufferedElements.add(element);
                     System.out.println("initializeState >>" + element);
                 }
@@ -77,14 +81,15 @@ public class OperatorState_1 {
 
         /**
          * 在进行checkpoint时会调用
+         *
          * @param context
          * @throws Exception
          */
         @Override
         public void snapshotState(FunctionSnapshotContext context) throws Exception {
-            checkpointedState.clear();
+            checkPointedState.clear();
             for (Tuple2<String, Long> element : bufferedElements) {
-                checkpointedState.add(element);
+                checkPointedState.add(element);
             }
             System.out.println("snapshotState");
         }
@@ -95,7 +100,7 @@ public class OperatorState_1 {
             //每次元素进来都会调用一次
             bufferedElements.add(value);
             System.out.println("invoke>>> " + value);
-            if(bufferedElements.size() == threshold){
+            if (bufferedElements.size() == threshold) {
                 //达到写出临界值再统一写出
                 for (Tuple2<String, Long> element : bufferedElements) {
                     //用户的业务逻辑，写出数据到外部存储,我这里直接打印

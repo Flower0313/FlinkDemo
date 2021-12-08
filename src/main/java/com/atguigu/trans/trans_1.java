@@ -35,6 +35,7 @@ public class trans_1 {
         DataStream<Integer> mapStream2 = source.map(String::length);
 
         //TODO 2.1 flatmap,按逗号切分字段,消费一个元素产生多个元素,DStream->DStream
+        //FlatMapFunction<T,O>,T就是输入元素,O就是out
         DataStream<String> flatMapStream = source.flatMap(new FlatMapFunction<String, String>() {
             @Override
             public void flatMap(String value, Collector<String> out) throws Exception {

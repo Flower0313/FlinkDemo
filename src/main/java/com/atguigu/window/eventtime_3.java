@@ -25,17 +25,17 @@ public class eventtime_3 {
         StreamExecutionEnvironment env =
                 StreamExecutionEnvironment.getExecutionEnvironment();
         //并行度设置为4后，由于source不受这个影响还是1，那么它将数据轮询给4个map，4个map中的数据通过keyBy就基于hash打乱了
-        env.setParallelism(3);//不同分区不共用一个窗口时间,但同分区不同组的还是共用一个窗口时间
+        env.setParallelism(1);//不同分区不共用一个窗口时间,但同分区不同组的还是共用一个窗口时间
         //env.getConfig().setAutoWatermarkInterval(50L);//默认200毫秒
 
-        DataStreamSource<String> inputStream = env.socketTextStream("hadoop102", 7777);
+        DataStreamSource<String> inputStream = env.socketTextStream("hadoop102", 31313);
 
         DataStream<SensorReading> dataStream = inputStream.map(line -> {
             String[] fields = line.split(",");
             return new SensorReading(fields[0], new Long(fields[1]), new Double(fields[2]));
         }).assignTimestampsAndWatermarks(WatermarkStrategy//explain 告诉flink哪个是时间戳
                 //乱序使用forBoundedOutOfOrderness，顺序使用forMonotonousTimestamps()
-                                                                                                            .<SensorReading>forBoundedOutOfOrderness(Duration.ofSeconds(2))//延迟时间
+                .<SensorReading>forBoundedOutOfOrderness(Duration.ofSeconds(2))//延迟时间
                 //x就是SensorReading类型的,y就是Long类型的recordTimestamp,以毫秒为单位,所以要*1000
                 .withTimestampAssigner(new SerializableTimestampAssigner<SensorReading>() {//这里将自定义SensorReading类型传入进去
                     @Override//抽取时间戳
@@ -45,9 +45,14 @@ public class eventtime_3 {
                     }
                 }));
         //这里标签要加个{}变成匿名内部类
-        OutputTag<SensorReading> outPutLate = new OutputTag<SensorReading>("late"){};
+        OutputTag<SensorReading> outPutLate = new OutputTag<SensorReading>("late") {
+        };
 
-        //基于事件时间的开窗聚合,统计15秒内温度的最小值,这里的15秒不是机器的走15秒，而是数据中时间戳的15秒数据
+        /*
+         * Explain
+         * 基于事件时间的开窗聚合,统计15秒内温度的最小值,这里的15秒不是机器的走15秒，而是数据中时间戳的15秒数据
+         * 这里虽然按id分区,但还是窗口触发时间还是一样,就像sensor_1的窗口还会被sensor_3的id触发
+         * */
         SingleOutputStreamOperator<SensorReading> minTempStream = dataStream.keyBy(SensorReading::getId)
                 .window(TumblingEventTimeWindows.of(Time.seconds(15)))//这里of的第二个参数是offset,默认为0
                 //到了15秒后先直接输出一个结果也就是在[0,15)上在加1分钟，来了之后再聚合成一个新结果输出

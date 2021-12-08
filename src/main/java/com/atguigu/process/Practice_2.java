@@ -30,14 +30,14 @@ public class Practice_2 {
         });
 
         dataStream.keyBy(SensorReading::getId)
-                .process(new TempConsIncreWarning(5)).print();
+                .process(new TempConsIncrWarning(5)).print();
 
 
         env.execute();
     }
 
     //第一个参数是id类型，第二个参数输入类型，第三个参数输出类型
-    public static class TempConsIncreWarning extends KeyedProcessFunction<String, SensorReading, Tuple2<String, String>> {
+    public static class TempConsIncrWarning extends KeyedProcessFunction<String, SensorReading, Tuple2<String, String>> {
         private Integer interval;//时间间隔
 
         private ValueState<Double> lastTempState;//上次温度状态
@@ -45,12 +45,13 @@ public class Practice_2 {
 
         @Override//获取状态句柄
         public void open(Configuration parameters) throws Exception {
+            //Attention flink不推荐在这里使用初始值
             lastTempState = getRuntimeContext().getState(new ValueStateDescriptor<Double>("last-temp", Double.class, 0.0));
             timerTsState = getRuntimeContext().getState(new ValueStateDescriptor<Long>("timer", Long.class));
         }
 
 
-        public TempConsIncreWarning(Integer interval) {
+        public TempConsIncrWarning(Integer interval) {
             this.interval = interval;
         }
 
@@ -61,11 +62,11 @@ public class Practice_2 {
 
         @Override
         public void processElement(SensorReading value, KeyedProcessFunction<String, SensorReading, Tuple2<String, String>>.Context ctx, Collector<Tuple2<String, String>> out) throws Exception {
-            //1.取出上次状态
+            //step-1.取出上次状态
             Double lastTemp = lastTempState.value();
             Long timerTs = timerTsState.value();
 
-            //如果温度上升且没有定时器，就注册10秒的定时器,开始等待
+            //step-2.如果温度上升且没有定时器，就注册10秒的定时器,开始等待
             if (value.getTemperature() > lastTemp && timerTs == null) {
                 //开始时间就是上次的时间戳，因为是从这次对比才知道上次相较于这次是在上升
                 long ts = ctx.timerService().currentProcessingTime() + interval * 1000L;//需要等待到多久
@@ -79,7 +80,6 @@ public class Practice_2 {
 
             //更新温度状态
             lastTempState.update(value.getTemperature());
-
         }
 
         @Override//时间到了时间窗口执行的任务

@@ -39,38 +39,42 @@ public class Practice_3 {
         env.execute();
     }
 
+    /**
+     * todo SensorReading是输入类型,Tuple3是输出类型
+     * 每个分区都有自己的状态值,也就是按keyBy的分组
+     */
     public static class TempIncreaseWarning extends RichFlatMapFunction<SensorReading, Tuple3<String, Double, Double>> {
         //温度跳变阈值
         private final Double threshold;
 
         //温度跳变阈值
-
         public TempIncreaseWarning(Double threshold) {
             this.threshold = threshold;
         }
 
-        //定义状态,保存上一次的温度值
+        //定义单值ValueState状态,保存上一次的温度值
         private ValueState<Double> lastTempState;
 
         @Override
         public void open(Configuration parameters) throws Exception {
-            //获取当前上下文，提交ValueState状态分发器
+            //获取当前上下文,注册ValueState状态分发器,因为在open后面才打开生命周期就能获得到getRuntimeContext
             lastTempState = getRuntimeContext().getState(new ValueStateDescriptor<Double>("last-temp", Double.class));
         }
 
 
         @Override
         public void flatMap(SensorReading value, Collector<Tuple3<String, Double, Double>> out) throws Exception {
-            //获取状态
+            //step-1 当有新值进来时先获取上次的单值状态
             Double lastTemp = lastTempState.value();
 
             if (lastTemp != null) {
+                //step-2 计算当前值与上个值的差值
                 double diff = Math.abs(value.getTemperature() - lastTemp);//计算这次和上次状态的差值
                 if (diff >= threshold) {//超过阈值就输出
                     out.collect(new Tuple3<>(value.getId(), lastTemp, value.getTemperature()));
                 }
             }
-            //更新状态
+            //step-3 不管是大于还是小于都会将当前值存入状态,作为下一次的前一次状态值
             lastTempState.update(value.getTemperature());
         }
 

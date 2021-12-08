@@ -1,4 +1,4 @@
-package bean;
+package com.atguigu.bean;
 
 
 import lombok.AllArgsConstructor;
