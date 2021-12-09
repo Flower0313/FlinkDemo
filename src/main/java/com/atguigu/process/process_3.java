@@ -4,6 +4,7 @@ import com.atguigu.source.SensorReading;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
 import org.apache.flink.streaming.api.functions.ProcessFunction;
 import org.apache.flink.util.Collector;
 
@@ -43,14 +44,38 @@ public class process_3 {
                 out.collect(new Tuple2<>(value.getId(), value.getTemperature()));
 
             }
-        }).print("before-keyBy");
+        });//.print("before-keyBy");
 
+        /*
+         * Explain
+         * 这个证明process可以作用于DataStream也可以作用于KeyedStream
+         * 泛型参数1是input的类型
+         * 泛型参数2是output的类型
+         *
+         * Attention
+         * 可以看到这里process有划线,这是因为按keyBy分区后process中就需要调用KeyedProcessFunction了
+         * */
         dataStream.keyBy(SensorReading::getId).process(new ProcessFunction<SensorReading, Object>() {
             @Override
             public void processElement(SensorReading value, ProcessFunction<SensorReading, Object>.Context ctx, Collector<Object> out) throws Exception {
                 out.collect(new Tuple2<>(value.getId(), value.getTemperature()));
             }
-        }).print("after-keyBy");
+        });//.print("after-keyBy");
+
+
+        /*
+         * Explain
+         * 泛型参数1是key的类型
+         * 泛型参数2是input的类型
+         * 泛型参数3是output的类型
+         * */
+        dataStream.keyBy(SensorReading::getId)
+                .process(new KeyedProcessFunction<String, SensorReading, Tuple2<String, Double>>() {
+                    @Override
+                    public void processElement(SensorReading value, KeyedProcessFunction<String, SensorReading, Tuple2<String, Double>>.Context ctx, Collector<Tuple2<String, Double>> out) throws Exception {
+                        out.collect(Tuple2.of(value.getId(), value.getTemperature()));
+                    }
+                }).print("keyedProcessFunction");
 
 
         env.execute();

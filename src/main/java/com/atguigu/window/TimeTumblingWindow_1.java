@@ -42,7 +42,7 @@ public class TimeTumblingWindow_1 {
             String[] fields = line.split(",");
             return new SensorReading(fields[0], new Long(fields[1]), new Double(fields[2]));
         });
-        //step-1.基于时间的滚动"聚合"窗口
+        //step-1.基于处理时间的滚动"聚合"窗口(AggregateFunction)
         dataStream.keyBy(SensorReading::getId)//虽然分了区，但还是一个线程，每个分区都会输出自己的统计值
                 //加入你设置了多并行度，那么每个分区都可以分配一个线程并行运行，但他们数据是可以共通的
                 .window(TumblingProcessingTimeWindows.of(Time.seconds(5)))
@@ -73,7 +73,7 @@ public class TimeTumblingWindow_1 {
         //dataStream.keyBy(SensorReading::getId).window(EventTimeSessionWindows.withGap(Time.minutes(5)));//方式二
         //dataStream.keyBy(SensorReading::getId).countWindow(5);
 
-        //step-2.基于时间的滚动的"全"窗口
+        //step-2.基于处理时间的滚动的"全"窗口(WindowFunction)
         dataStream.keyBy(SensorReading::getId)
                 .window(TumblingProcessingTimeWindows.of(Time.seconds(5)))
                 .apply(new WindowFunction<SensorReading, Tuple3<String, Long, Integer>, String, TimeWindow>() {

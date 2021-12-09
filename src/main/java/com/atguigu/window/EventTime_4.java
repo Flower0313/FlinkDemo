@@ -26,7 +26,7 @@ public class EventTime_4 {
                 StreamExecutionEnvironment.getExecutionEnvironment();
         //并行度设置为4后，由于source不受这个影响还是1，那么它将数据轮询给4个map，4个map中的数据通过keyBy就基于hash打乱了
         env.setParallelism(1);//不同分区不共用一个窗口时间,但同分区不同组的还是共用一个窗口时间
-        //env.getConfig().setAutoWatermarkInterval(50L);//默认200毫秒
+        //env.getConfig().setAutoWatermarkInterval(50L);//设置自动水位线默认200毫秒
 
         DataStreamSource<String> inputStream = env.socketTextStream("hadoop102", 31313);
 

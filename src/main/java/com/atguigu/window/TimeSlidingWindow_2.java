@@ -43,7 +43,7 @@ public class TimeSlidingWindow_2 {
             return new SensorReading(fields[0], new Long(fields[1]), new Double(fields[2]));
         });
 
-        //sub-step-2.1 开启时间滑动全窗口函数(ProcessWindowFunction)----------------------------------
+        //sub-step-2.1 开启事件时间滑动全窗口函数(ProcessWindowFunction)----------------------------------
         dataStream.keyBy(SensorReading::getId)
                 .window(SlidingProcessingTimeWindows.of(Time.seconds(3), Time.seconds(1)))
                 /*
@@ -84,7 +84,7 @@ public class TimeSlidingWindow_2 {
          *
          * */
 
-        //sub-step-2.2 开启时间滑动全窗口函数(WindowFunction)--------------------------------------
+        //sub-step-2.2 开启事件时间滑动全窗口函数(WindowFunction)--------------------------------------
         dataStream.keyBy(SensorReading::getId)
                 .window(SlidingProcessingTimeWindows.of(Time.seconds(5), Time.seconds(5)))
                 /*
@@ -115,7 +115,7 @@ public class TimeSlidingWindow_2 {
          * */
 
 
-        //sub-step-2.3 开启时间滑动聚合窗口函数(ReduceFunction)------------------------------------
+        //sub-step-2.3 开启事件时间滑动聚合窗口函数(ReduceFunction)------------------------------------
         dataStream.keyBy(SensorReading::getId)
                 .window(SlidingProcessingTimeWindows.of(Time.seconds(5), Time.seconds(5)))
                 /*
@@ -133,7 +133,7 @@ public class TimeSlidingWindow_2 {
                     }
                 });//.print("时间滑动聚合窗口函数1");
 
-        //sub-step-2.4 开启时间滑动聚合窗口函数(AggregateFunction)------------------------------------
+        //sub-step-2.4 开启事件时间滑动聚合窗口函数(AggregateFunction)------------------------------------
         dataStream.keyBy(SensorReading::getId)
                 .window(SlidingProcessingTimeWindows.of(Time.seconds(5), Time.seconds(5)))
                 /*

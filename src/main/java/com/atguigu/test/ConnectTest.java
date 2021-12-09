@@ -20,7 +20,7 @@ import static com.atguigu.common.CommonEnv.RECEIPT_SOURCE;
  * @Create 2021年12月08日19:38 - 周三
  * @Describe
  */
-public class Connect_Test {
+public class ConnectTest {
     public static void main(String[] args) throws Exception {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(10);

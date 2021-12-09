@@ -10,7 +10,7 @@ import java.util.Random;
  * @Create 2021年12月08日13:40 - 周三
  * @Describe
  */
-public class Common_Test {
+public class CommonTest {
     public static void main(String[] args) {
         Map<String, String> test = new HashMap<>();
         test.put("1", "flower");
