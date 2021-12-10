@@ -1,9 +1,7 @@
 package com.atguigu.window;
 
-import com.atguigu.source.SensorReading;
+import com.atguigu.bean.SensorReading;
 import org.apache.commons.collections.IteratorUtils;
-import org.apache.flink.api.common.eventtime.SerializableTimestampAssigner;
-import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.functions.AggregateFunction;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.streaming.api.datastream.DataStream;
@@ -12,9 +10,6 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.windowing.ProcessWindowFunction;
 import org.apache.flink.streaming.api.windowing.windows.GlobalWindow;
 import org.apache.flink.util.Collector;
-
-import java.time.Duration;
-import java.util.Iterator;
 
 /**
  * @ClassName FlinkDemo-countwindow_2

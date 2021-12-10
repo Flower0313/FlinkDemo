@@ -11,7 +11,7 @@ import static com.atguigu.common.CommonEnv.PV_SOURCE;
  * @ClassName FlinkDemo-flink_pv_1
  * @Author Holden_—__——___———____————_____Xiao
  * @Create 2021年12月08日1:02 - 周三
- * @Describe pv实现方式一
+ * @Describe pv实现方式一:网站总浏览量的统计
  */
 public class flink_pv_1 {
     public static void main(String[] args) throws Exception {

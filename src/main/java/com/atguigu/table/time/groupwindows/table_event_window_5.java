@@ -1,11 +1,8 @@
 package com.atguigu.table.time.groupwindows;
 
-import com.atguigu.source.SensorReading;
-import org.apache.flink.api.common.eventtime.SerializableTimestampAssigner;
+import com.atguigu.bean.SensorReading;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.streaming.api.datastream.DataStream;
-import org.apache.flink.streaming.api.datastream.DataStreamSource;
-import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.Tumble;

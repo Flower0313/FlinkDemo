@@ -1,15 +1,11 @@
 package com.atguigu.table.api;
 
-import com.atguigu.source.SensorReading;
+import com.atguigu.bean.SensorReading;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.*;
-import org.apache.flink.table.api.bridge.java.BatchTableEnvironment;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
-import org.apache.flink.table.descriptors.ConnectorDescriptor;
 import org.apache.flink.types.Row;
-
-import java.util.Map;
 
 import static org.apache.flink.table.api.Expressions.*;
 

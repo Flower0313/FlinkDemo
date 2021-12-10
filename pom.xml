@@ -208,5 +208,19 @@
             <version>RELEASE</version>
             <scope>compile</scope>
         </dependency>
+
+        <!--Flink CEP-->
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-cep_${scala.version}</artifactId>
+            <version>${flink.version}</version>
+        </dependency>
+        <!--Flink WebUI-->
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-runtime-web_${scala.version}</artifactId>
+            <version>${flink.version}</version>
+        </dependency>
+
     </dependencies>
 </project>

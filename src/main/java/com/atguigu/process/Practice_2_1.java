@@ -1,6 +1,6 @@
 package com.atguigu.process;
 
-import com.atguigu.source.SensorReading;
+import com.atguigu.bean.SensorReading;
 import org.apache.flink.api.common.state.ValueState;
 import org.apache.flink.api.common.state.ValueStateDescriptor;
 import org.apache.flink.api.java.tuple.Tuple2;
@@ -15,9 +15,9 @@ import org.apache.flink.util.Collector;
  * @ClassName FlinkDemo-Practice_1
  * @Author Holden_—__——___———____————_____Xiao
  * @Create 2021年11月26日23:07 - 周五
- * @Describe 监控温度传感器的温度值，如果在10秒内连续上升就报警
+ * @Describe 监控温度传感器的温度值，如果在5秒内连续上升就报警
  */
-public class Practice_2 {
+public class Practice_2_1 {
     public static void main(String[] args) throws Exception {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(1);
@@ -39,7 +39,6 @@ public class Practice_2 {
     //第一个参数是id类型，第二个参数输入类型，第三个参数输出类型
     public static class TempConsIncrWarning extends KeyedProcessFunction<String, SensorReading, Tuple2<String, String>> {
         private Integer interval;//时间间隔
-
         private ValueState<Double> lastTempState;//上次温度状态
         private ValueState<Long> timerTsState;//上次时间戳
 
@@ -62,20 +61,27 @@ public class Practice_2 {
 
         @Override
         public void processElement(SensorReading value, KeyedProcessFunction<String, SensorReading, Tuple2<String, String>>.Context ctx, Collector<Tuple2<String, String>> out) throws Exception {
-            //step-1.取出上次状态
+            //step-1 取出上次状态
             Double lastTemp = lastTempState.value();
             Long timerTs = timerTsState.value();
 
-            //step-2.如果温度上升且没有定时器，就注册10秒的定时器,开始等待
+            //step-2.1 如果温度上升且没有定时器闹钟，就注册5秒的定时器,开始等待
             if (value.getTemperature() > lastTemp && timerTs == null) {
-                //开始时间就是上次的时间戳，因为是从这次对比才知道上次相较于这次是在上升
+                //声明定时器,处理事件定时器执行开始时间就是当前时间+5秒
                 long ts = ctx.timerService().currentProcessingTime() + interval * 1000L;//需要等待到多久
+                //注册定时器
                 ctx.timerService().registerProcessingTimeTimer(ts);
+                //将启动定时器的时间戳保存在状态中,方便后面的状态来取消这个定时器
                 timerTsState.update(ts);
-            } else if (value.getTemperature() < lastTemp && timerTs != null) {//如果温度下降，删除之前的定时器
+            }
+            //step-2.2 若温度下降且时间戳不为空,就删除定时器,若暂停失败就证明超过5秒了,若暂停成功就说明还未达到5秒温度就下降了
+            else if (value.getTemperature() < lastTemp && timerTs != null) {
                 ctx.timerService().deleteProcessingTimeTimer(timerTs);
                 timerTsState.clear();
             }
+            //step-2.3 若温度下降且时间戳为空,啥都不执行
+
+            //step-2.4 若温度一直连续上升,那么5秒后会调用onTimer方法,这个方法调用后会清空timerTsState,又能开一个5秒窗口了
 
 
             //更新温度状态

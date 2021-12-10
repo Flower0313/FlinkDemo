@@ -1,12 +1,10 @@
 package com.atguigu.sink;
 
-import com.atguigu.source.SensorReading;
-import org.apache.flink.api.common.serialization.SerializationSchema;
+import com.atguigu.bean.SensorReading;
 import org.apache.flink.api.common.serialization.SimpleStringSchema;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaProducer;
-import org.apache.kafka.clients.producer.KafkaProducer;
 
 import java.util.Properties;
 

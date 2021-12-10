@@ -1,4 +1,6 @@
-package com.atguigu.source;
+package com.atguigu.bean;
+
+import java.util.Objects;
 
 /**
  * @ClassName FlinkDemo-SensorReading
@@ -46,7 +48,18 @@ public class SensorReading {
                 '}';
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        SensorReading that = (SensorReading) o;
+        return Objects.equals(id, that.id) && Objects.equals(timeStamp, that.timeStamp) && Objects.equals(temperature, that.temperature);
+    }
 
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, timeStamp, temperature);
+    }
 
     public SensorReading(String id, Long timeStamp, Double temperature) {
         this.id = id;

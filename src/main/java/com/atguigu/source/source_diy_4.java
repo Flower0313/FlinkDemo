@@ -1,5 +1,6 @@
 package com.atguigu.source;
 
+import com.atguigu.bean.SensorReading;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.source.SourceFunction;
@@ -29,7 +30,7 @@ public class source_diy_4 {
 
 }
 
-//实现数据源泛型类
+//实现数据源泛型类,若要实现多并行度方法就实现ParallelSourceFunction这个方法
 class MySensorSource implements SourceFunction<SensorReading> {
 
     private volatile boolean isRunning = true;

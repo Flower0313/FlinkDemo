@@ -4,11 +4,13 @@ import org.apache.flink.api.common.functions.ReduceFunction;
 import org.apache.flink.api.java.operators.DataSource;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.utils.ParameterTool;
+import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.datastream.KeyedStream;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 
 /**
  * @ClassName FlinkDemo-WordCount2
@@ -19,12 +21,15 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
  */
 public class WordCount2 {
     public static void main(String[] args) throws Exception {
-        //todo 流式
-        StreamExecutionEnvironment env =
-                StreamExecutionEnvironment.getExecutionEnvironment();
+
+        Configuration conf = new Configuration();
+
+        //todo 流式,这样创建环境就能查看webUI了
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironmentWithWebUI(conf);
         env.setParallelism(1);
 
-        DataStreamSource<String> source = env.socketTextStream("hadoop102", 31313);
+
+        DataStream<String> source = env.socketTextStream("hadoop102", 31313);
         /*//设置参数为--host 192.168.10.102 --port 7777
         ParameterTool parameterTool = ParameterTool.fromArgs(args);
 
@@ -40,10 +45,21 @@ public class WordCount2 {
         //DataSource中本质就是DataSet
         //DataStream<String> source = env.readTextFile(inputPath);
 
-        source.flatMap(new WordCount1.MyFlatMapper())
-                .keyBy(x -> x.f0).sum(1)//sum会将之前的数据也存在内存以便下次累积
-                .print("wc");
+        /*
+         * source在默认slot组
+         * flatMap在green_slot组
+         * sum在2个red_slot组
+         * print也在上面其中一个red_slot组
+         * */
+        /*source.flatMap(new WordCount1.MyFlatMapper()).slotSharingGroup("green")
+                .keyBy(x -> x.f0)
+                .sum(1).setParallelism(2).slotSharingGroup("red")
+                .print().setParallelism(1);*/
 
+        source.flatMap(new WordCount1.MyFlatMapper())
+                .keyBy(x -> x.f0)
+                .sum(1)
+                .print();
 
 
        /* DataStream<Tuple2<String, Integer>> res =

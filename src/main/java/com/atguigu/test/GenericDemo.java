@@ -11,8 +11,10 @@ package com.atguigu.test;
 public class GenericDemo {
     public static void main(String[] args) {
         //调用GenericTest静态方法,泛型为String
-        WaterTest<String> show = GenericTest.<String>show();
-        System.out.println(show.name = "dd");
+//        WaterTest<String> show = GenericTest.<String>show();
+//        System.out.println(show.name = "dd");
+
+        NiuPi.<String>show("313");
     }
 }
 
@@ -26,6 +28,12 @@ class GenericTest<T> {
     //show是方法名
     static <E> WaterTest<E> show() {
         return new WaterTest<>();
+    }
+}
+
+class NiuPi {
+    static <T> void show(T t) {
+        System.out.println(t);
     }
 }
 

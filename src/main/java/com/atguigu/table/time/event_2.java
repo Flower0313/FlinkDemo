@@ -1,6 +1,6 @@
 package com.atguigu.table.time;
 
-import com.atguigu.source.SensorReading;
+import com.atguigu.bean.SensorReading;
 import org.apache.flink.api.common.eventtime.SerializableTimestampAssigner;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.streaming.api.datastream.DataStream;
@@ -11,11 +11,8 @@ import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.table.descriptors.Rowtime;
 import org.apache.flink.table.descriptors.Schema;
-import org.apache.flink.types.Row;
 
 import java.time.Duration;
-
-import static org.apache.flink.table.api.Expressions.$;
 
 /**
  * @ClassName FlinkDemo-event_2

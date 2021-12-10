@@ -1,7 +1,13 @@
 sensor_1,1,1
 sensor_1,2,2
+sensor_1,3,3
+sensor_1,5,5
+sensor_1,6,11
+sensor_1,7,12
+sensor_1,8,13
+sensor_1,10,10
 sensor_1,12,13
-sensor_1,13,6
+sensor_1,17,6
 sensor_1,39,99
 sensor_13,11,13
 sensor_13,90,40.2

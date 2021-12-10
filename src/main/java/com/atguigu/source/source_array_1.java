@@ -1,5 +1,6 @@
 package com.atguigu.source;
 
+import com.atguigu.bean.SensorReading;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 

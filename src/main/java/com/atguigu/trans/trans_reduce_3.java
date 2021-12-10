@@ -1,12 +1,9 @@
 package com.atguigu.trans;
 
-import com.atguigu.source.SensorReading;
-import org.apache.commons.math3.fitting.leastsquares.EvaluationRmsChecker;
+import com.atguigu.bean.SensorReading;
 import org.apache.flink.api.common.functions.ReduceFunction;
-import org.apache.flink.api.java.tuple.Tuple;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.KeyedStream;
-import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
 /**

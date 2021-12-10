@@ -1,6 +1,6 @@
 package com.atguigu.sink;
 
-import com.atguigu.source.SensorReading;
+import com.atguigu.bean.SensorReading;
 
 import java.math.BigDecimal;
 
