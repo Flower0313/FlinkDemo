@@ -13,6 +13,8 @@ import org.apache.flink.streaming.api.functions.co.CoMapFunction;
 import org.apache.flink.util.Collector;
 import org.apache.flink.util.OutputTag;
 
+import static com.atguigu.common.CommonEnv.SENSOR;
+
 /**
  * @ClassName FlinkDemo-trans_select_4
  * @Author Holden_—__——___———____————_____Xiao
@@ -21,44 +23,45 @@ import org.apache.flink.util.OutputTag;
  */
 public class trans_connect_union_4 {
     public static void main(String[] args) throws Exception {
+        //Step-1 准备环境 & 处理数据
         StreamExecutionEnvironment env =
                 StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(1);
-
-        String inputPath = "T:\\ShangGuiGu\\FlinkDemo\\src\\main\\resources\\sensor.txt";
-
-        DataStream<String> inputStream = env.readTextFile(inputPath);
-
+        DataStream<String> inputStream = env.readTextFile(SENSOR);
         SingleOutputStreamOperator<SensorReading> dataStream = inputStream.map(line -> {
             String[] fields = line.split(",");
             return new SensorReading(fields[0], new Long(fields[1]), new Double(fields[2]));
         });
 
-        //声明标记
+        //Step-2 声明侧输出流标记
         OutputTag<SensorReading> highTag = new OutputTag<SensorReading>("high") {
         };
         OutputTag<SensorReading> lowTag = new OutputTag<SensorReading>("low") {
         };
-        //1.进行分流
+
+        //Step-3 进行分流
         SingleOutputStreamOperator<SensorReading> mainDataStream = dataStream
                 .process(new ProcessFunction<SensorReading, SensorReading>() {
                     @Override
                     public void processElement(SensorReading sr,
                                                Context context,
                                                Collector<SensorReading> out) throws Exception {
-                        if (sr.getTemperature() > 30) { //大于30度打上高温标记
+                        if (sr.getTemperature() > 30) {
+                            //侧输出流,大于30度打上高温标记,这里不是直接输出,这里只是打上标记,后续再取出
                             context.output(highTag, sr);
                         } else {
                             context.output(lowTag, sr);
                         }
+                        //主输出流
+                        //out.collect(sr);
                     }
                 });
 
-        //选择分流
+        //Step-4 根据标记取出流中对应的数据,实现分流的效果
         DataStream<SensorReading> highStream = mainDataStream.getSideOutput(highTag);
         DataStream<SensorReading> lowStream = mainDataStream.getSideOutput(lowTag);
 
-        //2.进行合流connect，将高温流转成二元组类，与低温流连接合并之后，输出状态信息
+        //Step-5 将高温流转成二元组类
         DataStream<Tuple2<String, Double>> warningStream = highStream.map(new MapFunction<SensorReading, Tuple2<String, Double>>() {
             @Override
             public Tuple2<String, Double> map(SensorReading value) throws Exception {
@@ -72,6 +75,7 @@ public class trans_connect_union_4 {
         connectedStreams.map(new CoMapFunction<Tuple2<String, Double>, SensorReading, Object>() {
             /*
              * Attention!!!
+             * 因为connect能连接两个类型不同的流,所以这里不需要在意类型的不同
              * 两条流互不干扰，各自处理各自的数据，点进去CoMapFunction源码,
              * 能看见map1和map2分别对应CoMapFunction的第一个和第二个泛型,
              * 也就是mqp1处理调用connect方法的流,map2处理connect()参数中的流,而这两个map的返回的类型都可以不同,
