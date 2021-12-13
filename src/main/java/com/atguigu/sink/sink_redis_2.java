@@ -10,6 +10,8 @@ import org.apache.flink.streaming.connectors.redis.common.mapper.RedisCommand;
 import org.apache.flink.streaming.connectors.redis.common.mapper.RedisCommandDescription;
 import org.apache.flink.streaming.connectors.redis.common.mapper.RedisMapper;
 
+import static com.atguigu.common.CommonEnv.PASSWORD;
+
 
 /**
  * @ClassName FlinkDemo-sink_redis_2
@@ -37,7 +39,7 @@ public class sink_redis_2 {
                 .setPort(6379)
                 .setMaxTotal(100)
                 .setTimeout(10000)
-                .setPassword("w654646")
+                .setPassword(PASSWORD)
                 .build();
 
         dataStream.addSink(new RedisSink<>(redisConfig, new RedisMapper<SensorReading>() {

@@ -13,13 +13,17 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 
+import static com.atguigu.common.CommonEnv.JDBC;
+import static com.atguigu.common.CommonEnv.SQL_PASSWORD;
+
 /**
  * @ClassName FlinkDemo-sink_mysql_5
  * @Author Holden_—__——___———____————_____Xiao
  * @Create 2021年12月05日12:35 - 周日
  * @Describe
  */
-public class sink_mysql_3 {
+public class
+sink_mysql_3 {
     public static void main(String[] args) throws Exception {
         StreamExecutionEnvironment env =
                 StreamExecutionEnvironment.getExecutionEnvironment();
@@ -41,7 +45,7 @@ public class sink_mysql_3 {
             @Override
             public void open(Configuration parameters) throws Exception {
                 System.out.println("连接数据库");
-                conn = DriverManager.getConnection("jdbc:mysql://hadoop102:3306/test?useSSL=false", "root", "root");
+                conn = DriverManager.getConnection(JDBC, "root", SQL_PASSWORD);
                 ps = conn.prepareStatement("insert into sensor values(?, ?, ?)");
             }
 

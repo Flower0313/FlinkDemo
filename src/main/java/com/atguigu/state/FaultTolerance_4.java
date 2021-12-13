@@ -1,12 +1,23 @@
 package com.atguigu.state;
 
 import com.atguigu.bean.SensorReading;
+import org.apache.flink.api.common.JobID;
 import org.apache.flink.api.common.restartstrategy.RestartStrategies;
 import org.apache.flink.api.common.time.Time;
+import org.apache.flink.api.common.typeutils.TypeSerializer;
 import org.apache.flink.contrib.streaming.state.EmbeddedRocksDBStateBackend;
+import org.apache.flink.core.fs.CloseableRegistry;
+import org.apache.flink.metrics.MetricGroup;
+import org.apache.flink.runtime.execution.Environment;
+import org.apache.flink.runtime.query.TaskKvStateRegistry;
+import org.apache.flink.runtime.state.*;
+import org.apache.flink.runtime.state.ttl.TtlTimeProvider;
 import org.apache.flink.streaming.api.CheckpointingMode;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+
+import javax.annotation.Nonnull;
+import java.util.Collection;
 
 /**
  * @ClassName FlinkDemo-FaultTolerance
@@ -18,12 +29,14 @@ public class FaultTolerance_4 {
     public static void main(String[] args) throws Exception {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(1);
+
         //旧版的RocksDBStateBackend 等价用法
         env.setStateBackend(new EmbeddedRocksDBStateBackend());
         env.getCheckpointConfig().setCheckpointStorage("T:\\ShangGuiGu\\FlinkDemo\\src\\main\\resources\\sensor.txt\\checkpoint-dir");
 
         //启用checkpoint，5是进行checkpoint的间隔，单位毫秒，这里是300ms进行一次checkpoint
         env.enableCheckpointing(300, CheckpointingMode.EXACTLY_ONCE);
+
 
         //设置checkpoint的超时时间,这里规定了检查点必须在1分钟内完成，否则会被抛弃
         env.getCheckpointConfig().setCheckpointTimeout(60000L);

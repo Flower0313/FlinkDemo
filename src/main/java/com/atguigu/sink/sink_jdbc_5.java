@@ -10,6 +10,9 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
 import java.math.BigDecimal;
 
+import static com.atguigu.common.CommonEnv.JDBC;
+import static com.atguigu.common.CommonEnv.SQL_PASSWORD;
+
 /**
  * @ClassName FlinkDemo-sink_jdbc_5
  * @Author Holden_—__——___———____————_____Xiao
@@ -44,9 +47,9 @@ public class sink_jdbc_5 {
                         .withBatchSize(1)
                         .build(),
                 new JdbcConnectionOptions.JdbcConnectionOptionsBuilder()
-                        .withUrl("jdbc:mysql://hadoop102:3306/test?useSSL=false")
+                        .withUrl(JDBC)
                         .withUsername("root")
-                        .withPassword("root")
+                        .withPassword(SQL_PASSWORD)
                         .withDriverName(Driver.class.getName())
                         .build()
         ));

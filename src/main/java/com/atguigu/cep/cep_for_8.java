@@ -11,6 +11,7 @@ import org.apache.flink.cep.pattern.Pattern;
 import org.apache.flink.cep.pattern.conditions.SimpleCondition;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.util.Collector;
 
 import java.time.Duration;
@@ -42,7 +43,7 @@ public class cep_for_8 {
                 })
                 .assignTimestampsAndWatermarks(WatermarkStrategy
                         .<SensorReading>forBoundedOutOfOrderness(Duration.ofSeconds(0))
-                        .withTimestampAssigner((e, r) -> e.getTimeStamp()));
+                        .withTimestampAssigner((e, r) -> e.getTimeStamp() * 1000L));
 
         //Step-2 定义模式
         Pattern<SensorReading, SensorReading> forPattern = Pattern
@@ -53,13 +54,10 @@ public class cep_for_8 {
                                     public boolean filter(SensorReading value) throws Exception {
                                         return "sensor_1".equals(value.getId());
                                     }
-                                }).next("end")
-                                .where(new SimpleCondition<SensorReading>() {
-                                    @Override
-                                    public boolean filter(SensorReading value) throws Exception {
-                                        return "sensor_2".equals(value.getId());
-                                    }
-                                })).times(2);
+                                })).timesOrMore(2)
+                .consecutive()
+                .within(Time.seconds(2));//这个表示连续两次的时间差不超过3秒
+        //.within(Time.seconds(1));
 
 
         //Step-3 在流上应用模式

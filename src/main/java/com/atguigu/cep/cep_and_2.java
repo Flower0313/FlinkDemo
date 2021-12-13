@@ -15,6 +15,8 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
+import static com.atguigu.common.CommonEnv.SENSOR;
+
 /**
  * @ClassName FlinkDemo-cep_basic_2
  * @Author Holden_—__——___———____————_____Xiao
@@ -28,7 +30,7 @@ public class cep_and_2 {
 
         //Step-1 原始数据源
         DataStream<SensorReading> waterSensorStream = env
-                .readTextFile("input/sensor.txt")
+                .readTextFile(SENSOR)
                 .map(new MapFunction<String, SensorReading>() {
                     @Override
                     public SensorReading map(String value) throws Exception {
