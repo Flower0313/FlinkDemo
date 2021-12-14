@@ -16,11 +16,12 @@ import org.apache.flink.streaming.api.windowing.time.Time;
  * @Describe 周期性watermark
  */
 public class wm_period_1 {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         //Step-1 准备环境 & 数据
         StreamExecutionEnvironment env =
                 StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(1);
+        env.getConfig().setAutoWatermarkInterval(1000L);
         //这里需要用socket流来读取数据，因为如果读文件数据，没有15秒程序就结束了，窗口也消失了
         DataStreamSource<String> inputStream = env.socketTextStream("hadoop102", 31313);
         DataStream<SensorReading> dataStream = inputStream.map(line -> {
@@ -47,6 +48,7 @@ public class wm_period_1 {
                 .window(TumblingEventTimeWindows.of(Time.seconds(5)))
                 .sum("temperature")
                 .print();
+        env.execute();
     }
 
 
@@ -63,14 +65,14 @@ public class wm_period_1 {
             this.maxTs = Long.MIN_VALUE + this.maxDelay + 1;
         }
 
-        @Override//当数据来的时候调用
+        @Override//数据性调用
         public void onEvent(SensorReading event, long eventTimestamp, WatermarkOutput output) {
             maxTs = Math.max(eventTimestamp, maxTs);
         }
 
         @Override//周期性调用
         public void onPeriodicEmit(WatermarkOutput output) {
-            System.out.println("生成WaterMark");
+            System.out.println("生成WaterMark" + (maxTs - maxDelay - 1L));
             //为了使水位线也实现左闭右开[x,y)
             output.emitWatermark(new Watermark(maxTs - maxDelay - 1L));
         }

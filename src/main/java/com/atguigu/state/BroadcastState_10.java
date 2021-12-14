@@ -17,24 +17,27 @@ import org.apache.flink.util.Collector;
  */
 public class BroadcastState_10 {
     public static void main(String[] args) throws Exception {
+        //Step-1 准备环境
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(1);
 
+        //313流
         DataStreamSource<String> dataStream = env.socketTextStream("hadoop102", 31313);
 
+        //88流
         DataStreamSource<String> controlStream = env.socketTextStream("hadoop102", 8888);
 
-        //定义状态并广播
+        //Step-2 定义广播状态
         MapStateDescriptor<String, String> stateDescriptor = new MapStateDescriptor<>("state", String.class, String.class);
-        //广播流
+        //将88流升级为广播流
         BroadcastStream<String> broadcastStream = controlStream.broadcast(stateDescriptor);
 
-        //
+        //Step-3 将313主流与88广播流连接
         dataStream.connect(broadcastStream)
                 .process(new BroadcastProcessFunction<String, String, Object>() {
                     @Override//31313端口的值进来
                     public void processElement(String value, BroadcastProcessFunction<String, String, Object>.ReadOnlyContext ctx, Collector<Object> out) throws Exception {
-                        //从广播状态中取值,不同的值做不同的业务
+                        //从ctx获取广播状态中取值,不同的值做不同的业务,可以看到这里只有ReadOnly
                         ReadOnlyBroadcastState<String, String> state = ctx.getBroadcastState(stateDescriptor);
                         System.out.println(value+"switch:"+state.get("switch"));
                         if ("1".equals(state.get("switch"))) {
@@ -48,7 +51,7 @@ public class BroadcastState_10 {
 
                     @Override//8888端口的值进来,也就是connect()方法中的流
                     public void processBroadcastElement(String value, BroadcastProcessFunction<String, String, Object>.Context ctx, Collector<Object> out) throws Exception {
-                        //提取状态
+                        //提取状态,这个方法中的ctx中就可以修改广播状态
                         BroadcastState<String, String> state = ctx.getBroadcastState(stateDescriptor);
                         //把值放入广播状态,这个值就是来自8888端口中的数据,这里将key值固定死了,当然可以根据你的需求改变,可以将流改成元组类型
                         state.put("switch", value);

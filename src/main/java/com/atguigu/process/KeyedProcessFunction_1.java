@@ -91,6 +91,7 @@ public class KeyedProcessFunction_1 {
 
 
             //7.1注册事件时间闹钟,相当于在你数据中的时间戳的1秒后调用
+            //注意事件定时器的执行时间要再加1秒,因为事件时间根据水位线来触发,水位线是减去了1ms,所以5999需要6000的数据触发
             //ctx.timerService().registerEventTimeTimer(value.getTimeStamp() + 1000L);
             //7.2删除事件时间闹钟
             //ctx.timerService().deleteEventTimeTimer(value.getTimeStamp() + 1000L);
@@ -114,6 +115,8 @@ public class KeyedProcessFunction_1 {
             //ctx.output();也能做侧输出流
             //out.collect();也能将一些值输出到主流
             //ctx.timeDomain();判断当前是处理时间还是事件时间
+            //Attention watermark的周期性生成其本质就是使用在这里使用套娃,在定时器执行的方法中再定义一个定时器
+            ctx.timerService().registerProcessingTimeTimer(ctx.timerService().currentProcessingTime() + 1000L);
             System.out.println(ctx.getCurrentKey() + "闹钟" + timestamp + "响了！");
         }
 

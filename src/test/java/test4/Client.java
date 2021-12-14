@@ -61,7 +61,7 @@ public class Client {
 
             }
         };
-        System.out.println(run1.getClass().getSuperclass());//因为Runnable是接口,所以会显示Object
+        System.out.println(run1.getClass().getSuperclass());//因为Runnable是接口,所以父类会显示Object
 
     }
 
