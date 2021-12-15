@@ -58,6 +58,7 @@ public class ReducingState_7 {
                         * 1.每条数据进来后都会相同key的进行聚合,而聚合的逻辑就定义在状态中,processElement中只是定义了一下
                         *   存数据取数据的过程而已。
                         * 2.每个分区的reducingState中有且仅保留一个聚合值,相当于聚合版的ValueState
+                        * 3.AggregatingState<IN, OUT>,而ReducingState<T>,所以前者能返回不一样的类型
                         * */
                         reducingState.add(value);//当数据添加进去时就触发了聚合操作
 

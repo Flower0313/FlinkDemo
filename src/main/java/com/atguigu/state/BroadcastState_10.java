@@ -27,10 +27,11 @@ public class BroadcastState_10 {
         //88流
         DataStreamSource<String> controlStream = env.socketTextStream("hadoop102", 8888);
 
-        //Step-2 定义广播状态
-        MapStateDescriptor<String, String> stateDescriptor = new MapStateDescriptor<>("state", String.class, String.class);
+        //Step-2 定义广播状态(可以定义多个状态)
+        MapStateDescriptor<String, String> stateDescriptor = new MapStateDescriptor<>("state1", String.class, String.class);
+        MapStateDescriptor<String, String> stateDescriptor2 = new MapStateDescriptor<>("state2", String.class, String.class);
         //将88流升级为广播流
-        BroadcastStream<String> broadcastStream = controlStream.broadcast(stateDescriptor);
+        BroadcastStream<String> broadcastStream = controlStream.broadcast(stateDescriptor, stateDescriptor2);
 
         //Step-3 将313主流与88广播流连接
         dataStream.connect(broadcastStream)
@@ -39,7 +40,9 @@ public class BroadcastState_10 {
                     public void processElement(String value, BroadcastProcessFunction<String, String, Object>.ReadOnlyContext ctx, Collector<Object> out) throws Exception {
                         //从ctx获取广播状态中取值,不同的值做不同的业务,可以看到这里只有ReadOnly
                         ReadOnlyBroadcastState<String, String> state = ctx.getBroadcastState(stateDescriptor);
-                        System.out.println(value+"switch:"+state.get("switch"));
+                        //ReadOnlyBroadcastState<String, String> state = ctx.getBroadcastState(stateDescriptor2);
+                        System.out.println("xbox" + state.contains("xbox"));
+                        System.out.println(value + "switch:" + state.get("switch"));
                         if ("1".equals(state.get("switch"))) {
                             out.collect("切换到1号配置...");
                         } else if ("0".equals(state.get("switch"))) {
@@ -54,7 +57,10 @@ public class BroadcastState_10 {
                         //提取状态,这个方法中的ctx中就可以修改广播状态
                         BroadcastState<String, String> state = ctx.getBroadcastState(stateDescriptor);
                         //把值放入广播状态,这个值就是来自8888端口中的数据,这里将key值固定死了,当然可以根据你的需求改变,可以将流改成元组类型
+                        //广播流可以增加多个值
                         state.put("switch", value);
+                        state.put("ps4", "ps4");
+                        state.put("xbox", "xbox");
                     }
                 }).print("");
 
