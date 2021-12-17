@@ -16,15 +16,14 @@ import java.util.Properties;
  */
 public class sink_kafka_1 {
     public static void main(String[] args) throws Exception {
+        //Step-1 准备环境 & 数据
         StreamExecutionEnvironment env =
                 StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(4);
-
         String inputPath = "T:\\ShangGuiGu\\FlinkDemo\\src\\main\\resources\\sensor.txt";
-
         DataStream<String> inputStream = env.readTextFile(inputPath);
 
-        //配置kafka
+        //Step-2 配置kafka
         Properties properties = new Properties();
         properties.setProperty("bootstrap.servers", "hadoop102:9092");
 
@@ -37,7 +36,6 @@ public class sink_kafka_1 {
 
         //将sensor.txt的数据发往kafka
         dataStream.addSink(myProducer);
-
 
         env.execute();
     }

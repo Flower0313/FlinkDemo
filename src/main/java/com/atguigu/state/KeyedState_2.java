@@ -42,7 +42,6 @@ public class KeyedState_2 {
 
         //ValueState类型状态,单个值
         private ValueState<Integer> keyCountState;
-
         //ListState类型状态,一组数据的列表
         private ListState<String> myListState;
         //MapState类型状态,key-value对

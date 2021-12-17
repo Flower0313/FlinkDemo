@@ -3,9 +3,7 @@ package com.atguigu.cep;
 import com.atguigu.bean.SensorReading;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.functions.MapFunction;
-import org.apache.flink.cep.CEP;
-import org.apache.flink.cep.PatternSelectFunction;
-import org.apache.flink.cep.PatternStream;
+import org.apache.flink.cep.*;
 import org.apache.flink.cep.functions.PatternProcessFunction;
 import org.apache.flink.cep.functions.TimedOutPartialMatchHandler;
 import org.apache.flink.cep.pattern.Pattern;
@@ -20,6 +18,7 @@ import org.apache.flink.util.OutputTag;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.apache.hadoop.metrics2.impl.MsInfo.Context;
 
@@ -52,13 +51,13 @@ public class cep_within_9 {
 
         //Step-2 定义模式
         //模式组
-        Pattern<SensorReading, SensorReading> withinPattern = Pattern.<SensorReading>begin("1")
+        Pattern<SensorReading, SensorReading> withinPattern = Pattern.<SensorReading>begin("one")
                 .where(new SimpleCondition<SensorReading>() {
                     @Override //筛选出名称是sensor_1
                     public boolean filter(SensorReading value) throws Exception {
                         return "sensor_1".equals(value.getId());
                     }
-                }).next("2")
+                }).next("two")
                 .where(new SimpleCondition<SensorReading>() {
                     @Override
                     public boolean filter(SensorReading value) throws Exception {
@@ -78,13 +77,38 @@ public class cep_within_9 {
             }
         });
 
-        //
-        SingleOutputStreamOperator<String> result = forStream
-                .process(new MyPatternProcessOut());
 
+        //便捷api处理超时数据
+        SingleOutputStreamOperator<SensorReading> flatResult = forStream.flatSelect(new OutputTag<SensorReading>("timeout") {
+                                                                                    },
+                new PatternFlatTimeoutFunction<SensorReading, SensorReading>() {
+                    @Override//超时数据
+                    public void timeout(Map<String, List<SensorReading>> pattern, long timeoutTimestamp, Collector<SensorReading> out) throws Exception {
+                        //attention 这里的key就是自己定义的模式组的名称
+                        for (Map.Entry<String, List<SensorReading>> entry : pattern.entrySet()) {
+                            System.out.println("超时" + entry.getKey() + ":" + entry.getValue());
+                        }
+                        out.collect(new SensorReading());
+                    }
+                }, new PatternFlatSelectFunction<SensorReading, SensorReading>() {
+                    @Override//正常数据
+                    public void flatSelect(Map<String, List<SensorReading>> pattern, Collector<SensorReading> out) throws Exception {
+                        for (Map.Entry<String, List<SensorReading>> entry : pattern.entrySet()) {
+                            System.out.println("正常" + entry.getKey() + ":" + entry.getValue());
+                        }
+                        out.collect(new SensorReading());
+                    }
+                });
+        flatResult.print("正常数据>>>");
+        flatResult.getSideOutput(new OutputTag<SensorReading>("timeout") {
+        }).print("超时数据>>>");
+
+        //处理超时部分匹配(自定义超时类)
+        /*SingleOutputStreamOperator<String> result = forStream
+                .process(new MyPatternProcessOut());
         result.getSideOutput(new OutputTag<SensorReading>("timeout") {
         }).print("超时数据");
-        result.print("正常数据");
+        result.print("正常数据");*/
 
 
         env.execute();
@@ -101,7 +125,7 @@ public class cep_within_9 {
 
         @Override
         public void processTimedOutMatch(Map<String, List<SensorReading>> match, PatternProcessFunction.Context ctx) throws Exception {
-            //Attention 输出到侧输出流
+            //Attention 输出到侧输出流,这里不能使用out主输出流,这里也不提供主输出流
             ctx.output(new OutputTag<String>("timeout") {
             }, match.toString());
             //System.out.println("超时数据:" + match.toString());

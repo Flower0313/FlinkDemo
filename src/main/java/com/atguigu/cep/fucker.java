@@ -3,29 +3,28 @@ package com.atguigu.cep;
 import com.atguigu.bean.SensorReading;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.functions.MapFunction;
-import org.apache.flink.cep.CEP;
-import org.apache.flink.cep.PatternSelectFunction;
-import org.apache.flink.cep.PatternStream;
-import org.apache.flink.cep.functions.PatternProcessFunction;
+import org.apache.flink.cep.*;
 import org.apache.flink.cep.pattern.Pattern;
 import org.apache.flink.cep.pattern.conditions.SimpleCondition;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.KeyedStream;
+import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.util.Collector;
+import org.apache.flink.util.OutputTag;
 
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
 /**
- * @ClassName FlinkDemo-cep_for_8
+ * @ClassName FlinkDemo-fucker
  * @Author Holden_—__——___———____————_____Xiao
- * @Create 2021年12月10日19:27 - 周五
- * @Describe 单个循环模式
+ * @Create 2021年12月16日16:53 - 周四
+ * @Describe
  */
-public class cep_for_8 {
+public class fucker {
     public static void main(String[] args) throws Exception {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(1);
@@ -46,45 +45,56 @@ public class cep_for_8 {
                         .<SensorReading>forBoundedOutOfOrderness(Duration.ofSeconds(0))
                         .withTimestampAssigner((e, r) -> e.getTimeStamp() * 1000L));
 
-        //Step-2 定义模式
-        Pattern<SensorReading, SensorReading> forPattern = Pattern
-                .begin(//模式组
-                        Pattern.<SensorReading>begin("start")
-                                .where(new SimpleCondition<SensorReading>() {
-                                    @Override //筛选出名称是sensor_1
-                                    public boolean filter(SensorReading value) throws Exception {
-                                        return "sensor_1".equals(value.getId());
-                                    }
-                                })).timesOrMore(2)
-                .consecutive()
-                .within(Time.seconds(2));//这个表示连续两次的时间差不超过3秒
-        //.within(Time.seconds(1));
-
         KeyedStream<SensorReading, String> keyedStream = waterSensorStream.keyBy(SensorReading::getId);
-
-        Pattern<SensorReading, SensorReading> chaoshi = Pattern.<SensorReading>begin("begin")
+        //Step-2 定义模式
+        //模式组
+        Pattern<SensorReading, SensorReading> withinPattern = Pattern.<SensorReading>begin("one")
                 .where(new SimpleCondition<SensorReading>() {
-                    @Override
+                    @Override //筛选出名称是sensor_1
                     public boolean filter(SensorReading value) throws Exception {
-                        return "sensor_1".equals(value.getId());
+                        return value.getTemperature() >= 1;
                     }
-                }).times(2).consecutive();
-
-        PatternStream<SensorReading> pattern = CEP.pattern(keyedStream, chaoshi);
+                }).times(2).consecutive().within(Time.seconds(5));//定义在这和定义在next("2")后面一样都是作用在2号模式组上
 
 
         //Step-3 在流上应用模式
-        PatternStream<SensorReading> forStream = CEP.pattern(waterSensorStream, forPattern);
+        PatternStream<SensorReading> forStream = CEP.pattern(keyedStream, withinPattern);
+        OutputTag<SensorReading> timeOutTag = new OutputTag<SensorReading>("TimeOut") {
+        };
 
-        //Step-4 从流出输出
-        pattern
+        /*forStream
                 .select(new PatternSelectFunction<SensorReading, String>() {
                     @Override
                     public String select(Map<String, List<SensorReading>> pattern) throws Exception {
                         return pattern.toString();
                     }
                 })
-                .print("pattern");
+                .print("pattern");*/
+
+        SingleOutputStreamOperator<SensorReading> selectDS = forStream.select(timeOutTag,
+                new PatternTimeoutFunction<SensorReading, SensorReading>() {
+                    @Override
+                    public SensorReading timeout(Map<String, List<SensorReading>> pattern, long timeoutTimestamp) throws Exception {
+                        /*for (Map.Entry<String, List<SensorReading>> entry : pattern.entrySet()) {
+                            System.out.println("超时数据:" + entry.getKey() + ">>" + entry.getValue());
+                        }*/
+                        return pattern.get("one").get(0);
+                    }
+                }, new PatternSelectFunction<SensorReading, SensorReading>() {
+                    @Override
+                    public SensorReading select(Map<String, List<SensorReading>> pattern) throws Exception {
+                        /*for (Map.Entry<String, List<SensorReading>> entry : pattern.entrySet()) {
+                            System.out.println("正常数据:" + entry.getKey() + ">>" + entry.getValue());
+                        }*/
+                        return pattern.get("one").get(0);
+                    }
+                });
+
+        DataStream<SensorReading> sideOutput = selectDS.getSideOutput(timeOutTag);
+
+        sideOutput.print("超时数据>>>");
+        DataStream<SensorReading> unionDS = selectDS.union(sideOutput);
+        unionDS.print("总数据量>>>");
 
         env.execute();
     }

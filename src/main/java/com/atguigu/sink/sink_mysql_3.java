@@ -20,7 +20,7 @@ import static com.atguigu.common.CommonEnv.SQL_PASSWORD;
  * @ClassName FlinkDemo-sink_mysql_5
  * @Author Holden_—__——___———____————_____Xiao
  * @Create 2021年12月05日12:35 - 周日
- * @Describe
+ * @Describe 自定义mysql—Sink
  */
 public class
 sink_mysql_3 {
