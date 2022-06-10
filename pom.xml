@@ -52,6 +52,11 @@
                 </exclusion>
             </exclusions>
         </dependency>
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-connector-jdbc_2.12</artifactId>
+            <version>${flink.version}</version>
+        </dependency>
 
         <!--Kafka连接依赖-->
         <dependency>
@@ -81,7 +86,14 @@
         <dependency>
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
-            <version>5.1.47</version>
+            <version>8.0.25</version>
+        </dependency>
+
+        <!--flink cdc-->
+        <dependency>
+            <groupId>com.ververica</groupId>
+            <artifactId>flink-connector-mysql-cdc</artifactId>
+            <version>2.0.2</version>
         </dependency>
 
 
@@ -95,6 +107,7 @@
         <!--Table API-->
         <dependency>
             <groupId>org.apache.flink</groupId>
+            <!--负责tableAPI和datastream的转换-->
             <artifactId>flink-table-api-java-bridge_${scala.version}</artifactId>
             <version>${flink.version}</version>
         </dependency>
@@ -112,6 +125,11 @@
         </dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
+            <artifactId>flink-streaming-scala_${scala.version}</artifactId>
+            <version>${flink.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.flink</groupId>
             <artifactId>flink-csv</artifactId>
             <version>${flink.version}</version>
         </dependency>
@@ -125,13 +143,6 @@
             <artifactId>flink-table-common</artifactId>
             <version>${flink.version}</version>
         </dependency>
-
-        <!--hdfs读取文件-->
-        <!--<dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-client</artifactId>
-            <version>3.1.3</version>
-        </dependency>-->
 
         <!--redis-->
         <dependency>
@@ -176,8 +187,8 @@
             <artifactId>hadoop-client</artifactId>
             <version>3.1.3</version>
         </dependency>
-        <!--这个依赖会导致本地ExecutionEnvironment失效-->
-        <!--<dependency>
+        <!--连接hive时使用,这个依赖会导致本地ExecutionEnvironment失效-->
+        <dependency>
             <groupId>org.apache.hive</groupId>
             <artifactId>hive-exec</artifactId>
             <version>3.1.2</version>
@@ -190,13 +201,19 @@
                     <groupId>org.apache.logging.log4j</groupId>
                     <artifactId>log4j-slf4j-impl</artifactId>
                 </exclusion>
+                <exclusion>
+                    <artifactId>commons-compress</artifactId>
+                    <groupId>org.apache.commons</groupId>
+                </exclusion>
             </exclusions>
-        </dependency>-->
-        <!--<dependency>
+        </dependency>
+        <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-connector-hive_2.12</artifactId>
             <version>1.13.3</version>
-        </dependency>-->
+        </dependency>
+
+
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
@@ -216,7 +233,7 @@
             <artifactId>flink-cep_${scala.version}</artifactId>
             <version>${flink.version}</version>
         </dependency>
-        <!--Flink WebUI-->
+        <!--Flink WebUI 本地就能访问web页面了-->
         <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-runtime-web_${scala.version}</artifactId>
