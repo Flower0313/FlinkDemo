@@ -20,7 +20,7 @@ public class mysqlcdc {
         //Long值使用BIGINT来替代
         //没有PROCTIME()属性字段的表都是维表，一般维表的是变化不频繁的
         //写出外部数据库也要指明唯一的key，能根据key值进行更改的，比如es和redis就有幂等性
-        tEnv.executeSql("create table by_contract(" +
+        tEnv.executeSql("create table contract_basic(" +
                 "id BIGINT," +
                 "PRIMARY KEY (id) NOT ENFORCED" +
                 ") with (" +
@@ -29,13 +29,14 @@ public class mysqlcdc {
                 "'port'='3306'," +
                 "'username'='root'," +
                 "'password'='Hutong_0709!!'," +
-                "'database-name'='business_uat_2'," +
-                "'table-name'='by_contract'" +
+                "'database-name'='htdw_bi'," +
+                "'table-name'='contract_basic'," +
+                "'scan.startup.mode'='latest-offset'" +
                 ")");
 
-        Table table = tEnv.sqlQuery("select * from by_contract");
-        tEnv.toAppendStream(table,Row.class).print();
-//        table.execute().print();
-        env.execute();
+        Table table = tEnv.sqlQuery("select * from contract_basic");
+        //tEnv.toAppendStream(table,Row.class).print();
+
+        table.execute().print();
     }
 }

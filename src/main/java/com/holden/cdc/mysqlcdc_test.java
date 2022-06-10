@@ -8,6 +8,7 @@ import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.TableEnvironment;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.types.Row;
+import com.mysql.cj.jdbc.Driver;
 
 /**
  * @ClassName FlinkDemo-mysqlcdc_test
@@ -28,7 +29,7 @@ public class mysqlcdc_test {
                 "id BIGINT," +
                 "name String," +
                 "create_time TIMESTAMP(3)," +
-                "WATERMARK FOR `create_time` AS create_time - INTERVAL '10' SECONDS," +
+                "WATERMARK FOR `create_time` AS create_time - INTERVAL '0' SECONDS," +
                 "PRIMARY KEY (id) NOT ENFORCED" +
                 ") with (" +
                 "'connector'='mysql-cdc'," +
@@ -48,7 +49,6 @@ public class mysqlcdc_test {
                 "`dept_id` BIGINT," +
                 "`create_time` TIMESTAMP(3)," +
                 "WATERMARK FOR `create_time` AS `create_time` - INTERVAL '0' SECOND," +
-                "`ts` as PROCTIME()," +
                 "PRIMARY KEY (id) NOT ENFORCED" +
                 ") with (" +
                 "'connector'='mysql-cdc'," +
@@ -60,8 +60,28 @@ public class mysqlcdc_test {
                 "'table-name'='employee'" +
                 ")");
 
-        Table table = tEnv.sqlQuery("select *,row_number() over(order by ts) as rk from employee");
-        tEnv.toChangelogStream(table).print();
+        tEnv.executeSql("create table `result`(" +
+                "name String," +
+                "num Bigint," +
+                "PRIMARY KEY (name) NOT ENFORCED" +
+                ") with (" +
+                "'connector'='jdbc'," +
+                "'url'='jdbc:mysql://127.0.0.1:3306/spider_base'," +
+                "'table-name'='result'," +
+                "'username'='root'," +
+                "'password'='root'" +
+                ")");
+
+        Table table = tEnv.sqlQuery("select b.name,count(distinct a.name) as num " +
+                "from employee a left join department b on a.dept_id=b.id " +
+                "group by b.name");
+
+        tEnv.createTemporaryView("resultTable", table);
+
+
+        //输出方式一
+        tEnv.executeSql("insert into `result` select name,num from resultTable where name is not null and num is not null");
+
 
 
 

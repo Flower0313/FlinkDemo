@@ -18,18 +18,18 @@ public class jdbc {
         StreamTableEnvironment tEnv = StreamTableEnvironment.create(env);
 
         //Long值使用BIGINT来替代
-        tEnv.executeSql("create table department(" +
-                "id BIGINT," +
+        tEnv.executeSql("create table `result`(" +
                 "name String," +
-                "PRIMARY KEY (id) NOT ENFORCED" +
+                "num Bigint," +
+                "PRIMARY KEY (name) NOT ENFORCED" +
                 ") with (" +
                 "'connector'='jdbc'," +
                 "'url'='jdbc:mysql://127.0.0.1:3306/spider_base'," +
-                "'table-name'='department'," +
+                "'table-name'='result'," +
                 "'username'='root'," +
                 "'password'='root'" +
                 ")");
 
-        tEnv.executeSql("insert into `department` values(1007,'你好')");
+        tEnv.executeSql("insert into `result` values('你好',1007)");
     }
 }

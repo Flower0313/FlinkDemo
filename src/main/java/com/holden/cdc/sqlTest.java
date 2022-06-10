@@ -63,6 +63,7 @@ public class sqlTest {
         OutputTag<Employee> employeeTag = new OutputTag<Employee>("employee") {
         };
 
+
         //分流
         SingleOutputStreamOperator<Object> mainDataStream = mysqlDS.process(new ProcessFunction<String, Object>() {
             @Override
@@ -116,6 +117,9 @@ public class sqlTest {
             //过滤掉null和撤回流操作
             return (RowKind.INSERT == kind || RowKind.UPDATE_AFTER == kind) && x.getField("name") != null && x.getField("num") != null;
         });
+
+
+
 
 
 
