@@ -79,7 +79,8 @@ public class mysqlcdc_test {
         tEnv.createTemporaryView("resultTable", table);
 
 
-        //输出方式一
+        //输出
+        //这样也是幂等性输出，而且也会改变之前的值
         tEnv.executeSql("insert into `result` select name,num from resultTable where name is not null and num is not null");
 
 
