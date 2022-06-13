@@ -24,6 +24,9 @@ public class MyCustomerDeserialization implements DebeziumDeserializationSchema<
      * "before":{"id":"","tm_name":""...}
      * "after":{"":"","":""...}
      * "ts":12412412
+     *
+     * 我们需要的格式：
+     * {"database":"xxx","data":{"name":"flower","id":2},"type":"xxx","table":"xxx"}
      * */
 
     @Override
@@ -35,8 +38,8 @@ public class MyCustomerDeserialization implements DebeziumDeserializationSchema<
         //Step-2 获取主题信息，包含数据库和表名
         String topic = sourceRecord.topic();
         String[] arr = topic.split("\\.");
-        String db = arr[1];
-        String tableName = arr[2];
+        String db = arr[1];//获取数据库名
+        String tableName = arr[2];//获取表名
 
 
         //Step-5 获取after数据
@@ -49,21 +52,31 @@ public class MyCustomerDeserialization implements DebeziumDeserializationSchema<
             }
         }
 
-
         //Step-6 获取操作类型
         Envelope.Operation operation = Envelope.operationFor(sourceRecord);
         String type = operation.toString().toLowerCase();
-        if ("create".equals(type) || "read".equals(type) ) {
+        if ("create".equals(type) || "read".equals(type)) {
             type = "insert";
         }
-
 
         //Step-7 将字段写入JSON对象
         result.put("database", db);
         result.put("table", tableName);
         result.put("type", type);
-        result.put("after", afterJson);
 
+        //如果是delete操作再读取数据,不用提早读取
+        if ("delete".equals(type)) {
+            Struct before = value2.getStruct("before");
+            JSONObject beforeJson = new JSONObject();
+            if (before != null) {
+                for (Field field : before.schema().fields()) {
+                    beforeJson.put(field.name(), before.get(field.name()));
+                }
+            }
+            result.put("data", beforeJson);
+        } else {
+            result.put("data", afterJson);
+        }
 
         //Step- 输出
         collector.collect(result.toString());

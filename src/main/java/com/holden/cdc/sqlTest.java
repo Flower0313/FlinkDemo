@@ -1,13 +1,11 @@
 package com.holden.cdc;
 
 import com.alibaba.fastjson.JSONObject;
-import com.holden.bean.SensorReading;
 import com.mysql.cj.jdbc.Driver;
 import com.ververica.cdc.connectors.mysql.MySqlSource;
 import com.ververica.cdc.connectors.mysql.table.StartupOptions;
 import com.ververica.cdc.debezium.DebeziumSourceFunction;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
-import org.apache.flink.api.common.functions.RichMapFunction;
 import org.apache.flink.connector.jdbc.JdbcConnectionOptions;
 import org.apache.flink.connector.jdbc.JdbcExecutionOptions;
 import org.apache.flink.connector.jdbc.JdbcSink;
@@ -16,11 +14,8 @@ import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.ProcessFunction;
-import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
-import org.apache.flink.table.descriptors.Rowtime;
-import org.apache.flink.table.api.Schema;
 import org.apache.flink.types.Row;
 import org.apache.flink.types.RowKind;
 import org.apache.flink.util.Collector;
@@ -42,6 +37,7 @@ public class sqlTest {
         //注册流环境
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(1);
+        env.enableCheckpointing(3000);
         //注册表环境
         StreamTableEnvironment tEnv = StreamTableEnvironment.create(env);
         //连接数据源
@@ -58,6 +54,8 @@ public class sqlTest {
         //转为Source
         DataStreamSource<String> mysqlDS = env.addSource(mysql);
 
+
+
         OutputTag<Department> departmentTag = new OutputTag<Department>("department") {
         };
         OutputTag<Employee> employeeTag = new OutputTag<Employee>("employee") {
@@ -70,7 +68,7 @@ public class sqlTest {
             public void processElement(String value, ProcessFunction<String, Object>.Context ctx, Collector<Object> out) throws Exception {
                 JSONObject jsonObject = JSONObject.parseObject(value);
                 String table = jsonObject.getString("table");
-                JSONObject after = jsonObject.getJSONObject("after");
+                JSONObject after = jsonObject.getJSONObject("data");
                 if ("employee".equals(table)) {
                     Integer id = after.getInteger("id");
                     String name = after.getString("name");
@@ -82,7 +80,7 @@ public class sqlTest {
                     ctx.output(departmentTag, department);
                 }
             }
-        });
+        }).setParallelism(4);
         //Employee表
         DataStream<Employee> employeeStream = mainDataStream.getSideOutput(employeeTag).assignTimestampsAndWatermarks(WatermarkStrategy
                 .<Employee>forBoundedOutOfOrderness(Duration.ofSeconds(0))
@@ -117,10 +115,6 @@ public class sqlTest {
             //过滤掉null和撤回流操作
             return (RowKind.INSERT == kind || RowKind.UPDATE_AFTER == kind) && x.getField("name") != null && x.getField("num") != null;
         });
-
-
-
-
 
 
         //mysql幂等性写入

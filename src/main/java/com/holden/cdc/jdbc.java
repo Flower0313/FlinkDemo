@@ -24,7 +24,7 @@ public class jdbc {
                 "PRIMARY KEY (name) NOT ENFORCED" +
                 ") with (" +
                 "'connector'='jdbc'," +
-                "'url'='jdbc:mysql://127.0.0.1:3306/spider_base'," +
+                "'url'='jdbc:mysql://127.0.0.1:3306/spider_base?characterEncoding=UTF-8'," +
                 "'table-name'='result'," +
                 "'username'='root'," +
                 "'password'='root'" +

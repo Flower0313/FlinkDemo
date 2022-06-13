@@ -1,14 +1,8 @@
 package com.holden.cdc;
 
-import org.apache.flink.api.java.tuple.Tuple2;
-import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.table.api.EnvironmentSettings;
 import org.apache.flink.table.api.Table;
-import org.apache.flink.table.api.TableEnvironment;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
-import org.apache.flink.types.Row;
-import com.mysql.cj.jdbc.Driver;
 
 /**
  * @ClassName FlinkDemo-mysqlcdc_test
@@ -76,17 +70,13 @@ public class mysqlcdc_test {
                 "from employee a left join department b on a.dept_id=b.id " +
                 "group by b.name");
 
+
         tEnv.createTemporaryView("resultTable", table);
 
 
         //输出
         //这样也是幂等性输出，而且也会改变之前的值
         tEnv.executeSql("insert into `result` select name,num from resultTable where name is not null and num is not null");
-
-
-
-
-
 
 
         /*
