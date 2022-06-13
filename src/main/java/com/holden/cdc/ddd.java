@@ -18,6 +18,6 @@ public class ddd {
 
         BigDecimal aa = BigDecimal.valueOf(3000.00);
         BigDecimal bb = BigDecimal.valueOf(3110.000000);
-        System.out.println(aa.subtract(bb));
+        System.out.println(bb.divide(BigDecimal.valueOf(0),2,RoundingMode.HALF_UP));
     }
 }

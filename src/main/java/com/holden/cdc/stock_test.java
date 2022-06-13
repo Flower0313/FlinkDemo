@@ -40,29 +40,24 @@ public class stock_test {
                 .username("root")
                 .password("root")
                 .databaseList("spider_base")
-                .tableList("spider_base.ods_stock")
+                .tableList("spider_base.ods_stock_online")
                 .startupOptions(StartupOptions.initial())
                 .deserializer(new MyCustomerDeserialization())
                 .build();
 
         DataStreamSource<String> mysqlDS = env.addSource(mysql);
-        mysqlDS.print();
 
         //转为POJO类并且keyBy分区
         KeyedStream<OdsStock, String> keyedStream = mysqlDS.map(x -> {
-            System.out.println(atomicInteger);
-            atomicInteger.incrementAndGet();
             JSONObject jsonObject = JSONObject.parseObject(x);
             JSONObject data = jsonObject.getJSONObject("data");
             return new OdsStock(data.getString("code"), data.getString("name"), data.getBigDecimal("closing_price"), data.getBigDecimal("last_closing"), data.getString("date"), data.getBigDecimal("deal_amount"), data.getInteger("rk"), data.getBigDecimal("x"), data.getBigDecimal("i"), data.getBigDecimal("rsv"), data.getBigDecimal("highest"), data.getBigDecimal("lowest"), jsonObject.getString("table"));
         }).keyBy(OdsStock::getCode);
 
 
-        /*SingleOutputStreamOperator<StockMid> result = keyedStream.map(new RichMapFunction<OdsStock, StockMid>() {
-
+        SingleOutputStreamOperator<StockMid> result = keyedStream.map(new RichMapFunction<OdsStock, StockMid>() {
             //map状态
             private MapState<String, StockMid> stockState;
-
 
             @Override
             public void open(Configuration parameters) throws Exception {
@@ -76,10 +71,12 @@ public class stock_test {
 
             @Override
             public StockMid map(OdsStock value) throws Exception {
+                System.out.println(atomicInteger);
+                atomicInteger.incrementAndGet();
                 StockMid stockMid = new StockMid();
                 String key = value.getCode() + "-" + value.getRk();
                 //第一条数据
-                if (value.getRk() == 1 || stockState.isEmpty()) {
+                if (value.getRk() == 1) {
                     BigDecimal highest = value.getHighest();
                     BigDecimal lowest = value.getLowest();
                     BeanUtils.copyProperties(stockMid, value);
@@ -89,9 +86,10 @@ public class stock_test {
                     stockMid.setEma12(value.getClosing_price());
                     stockMid.setEma26(value.getClosing_price());
                     stockMid.setClosing_diff(new BigDecimal("0.0"));
-                    BigDecimal rsv = value.getClosing_price().subtract(lowest).multiply(BigDecimal.valueOf(100)).divide(highest.subtract(lowest), BigDecimal.ROUND_HALF_UP);
 
+                    BigDecimal rsv = BigDecimal.valueOf(0.0);
                     if (!Objects.equals(highest, lowest)) {
+                        rsv = (value.getClosing_price().subtract(lowest).multiply(BigDecimal.valueOf(100))).divide(highest.subtract(lowest), 6, RoundingMode.HALF_UP);
                         stockMid.setRsv(rsv);
                     } else {
                         stockMid.setRsv(new BigDecimal("0.0"));
@@ -111,11 +109,14 @@ public class stock_test {
                     //除开第一条后的数据
                     if (!stockState.isEmpty()) {
                         String last_key = value.getCode() + "-" + (value.getRk() - 1);
+                        //手动移除掉前面的状态，不然后面的读取速度会变慢
+                        if (value.getRk() >= 3) {
+                            stockState.remove(value.getCode() + "-" + (value.getRk() - 2));
+                        }
                         //取上一条记录
                         StockMid last_Stock = stockState.get(last_key);
                         BeanUtils.copyProperties(stockMid, value);
                         BigDecimal closing_diff = value.getClosing_price().subtract(last_Stock.getClosing_price());
-
                         BigDecimal ema12 = (BigDecimal.valueOf(2).multiply(value.getClosing_price()).add(BigDecimal.valueOf(11).multiply(last_Stock.getEma12()))).divide(BigDecimal.valueOf(13), 6, RoundingMode.HALF_UP);
                         BigDecimal ema26 = (BigDecimal.valueOf(2).multiply(value.getClosing_price()).add(BigDecimal.valueOf(24).multiply(last_Stock.getEma26()))).divide(BigDecimal.valueOf(26), 6, RoundingMode.HALF_UP);
 
@@ -125,8 +126,6 @@ public class stock_test {
                         stockMid.setDiff(ema12.subtract(ema26));
                         stockMid.setClosing_diff(closing_diff);
                         stockMid.setLast_closing(last_Stock.getClosing_price());
-
-
                         if (closing_diff.compareTo(BigDecimal.valueOf(0)) > 0) {
                             stockMid.setObv(last_Stock.getObv().add(value.getDeal_amount()));
 
@@ -139,11 +138,9 @@ public class stock_test {
                             stockMid.setDown24(last_Stock.getDown24().abs().multiply(BigDecimal.valueOf(23)).divide(BigDecimal.valueOf(24), 6, RoundingMode.HALF_UP));
                         } else if (closing_diff.compareTo(BigDecimal.valueOf(0)) < 0) {
                             stockMid.setObv(last_Stock.getObv().subtract(value.getDeal_amount()));
-
                             stockMid.setDown6((closing_diff.abs().add(last_Stock.getDown6().multiply(BigDecimal.valueOf(5)))).divide(BigDecimal.valueOf(6), 6, RoundingMode.HALF_UP));
                             stockMid.setDown12((closing_diff.abs().add(last_Stock.getDown12().multiply(BigDecimal.valueOf(11)))).divide(BigDecimal.valueOf(12), 6, RoundingMode.HALF_UP));
                             stockMid.setDown24((closing_diff.abs().add(last_Stock.getDown24().multiply(BigDecimal.valueOf(23)))).divide(BigDecimal.valueOf(24), 6, RoundingMode.HALF_UP));
-
                             stockMid.setUp6(last_Stock.getUp6().multiply(BigDecimal.valueOf(5)).divide(BigDecimal.valueOf(6), 6, RoundingMode.HALF_UP));
                             stockMid.setUp12(last_Stock.getUp12().multiply(BigDecimal.valueOf(11)).divide(BigDecimal.valueOf(12), 6, RoundingMode.HALF_UP));
                             stockMid.setUp24(last_Stock.getUp24().multiply(BigDecimal.valueOf(23)).divide(BigDecimal.valueOf(24), 6, RoundingMode.HALF_UP));
@@ -168,9 +165,9 @@ public class stock_test {
                 }
                 return stockMid;
             }
-        });*/
+        });
 
-        //result.print();
+        result.print();
         env.execute();
     }
 }

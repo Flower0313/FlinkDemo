@@ -35,18 +35,14 @@ public class test {
                 .username("root")
                 .password("root")
                 .databaseList("spider_base")
-                .tableList("spider_base.employee")
+                .tableList("spider_base.ods_stock")
                 .startupOptions(StartupOptions.initial())
                 .deserializer(new MyCustomerDeserialization())
                 .build();
 
         DataStreamSource<String> mysqlDS = env.addSource(mysql);
 
-        mysqlDS.map(x -> {
-            System.out.println(atomicInteger.get());
-            atomicInteger.incrementAndGet();
-            return x;
-        }).setParallelism(1).print();
+        mysqlDS.print();
 
 
         env.execute();
