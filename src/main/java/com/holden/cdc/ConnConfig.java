@@ -9,4 +9,6 @@ package com.holden.cdc;
 public class ConnConfig {
     public final static String DATABASE = "spider_base";
     public final static String TABLE_LIST = "spider_base.employee,spider_base.department";
+    public final static Integer SCALE = 6;
+    public final static String INITIAL = "0.0";
 }

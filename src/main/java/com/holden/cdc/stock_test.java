@@ -80,29 +80,29 @@ public class stock_test {
                     BigDecimal highest = value.getHighest();
                     BigDecimal lowest = value.getLowest();
                     BeanUtils.copyProperties(stockMid, value);
-                    stockMid.setObv(new BigDecimal("0.0"));
-                    stockMid.setLast_closing(new BigDecimal("0.0"));
-                    stockMid.setDiff(new BigDecimal("0.0"));
+                    stockMid.setObv(new BigDecimal(ConnConfig.INITIAL));
+                    stockMid.setLast_closing(new BigDecimal(ConnConfig.INITIAL));
+                    stockMid.setDiff(new BigDecimal(ConnConfig.INITIAL));
                     stockMid.setEma12(value.getClosing_price());
                     stockMid.setEma26(value.getClosing_price());
-                    stockMid.setClosing_diff(new BigDecimal("0.0"));
+                    stockMid.setClosing_diff(new BigDecimal(ConnConfig.INITIAL));
 
                     BigDecimal rsv = BigDecimal.valueOf(0.0);
                     if (!Objects.equals(highest, lowest)) {
-                        rsv = (value.getClosing_price().subtract(lowest).multiply(BigDecimal.valueOf(100))).divide(highest.subtract(lowest), 6, RoundingMode.HALF_UP);
+                        rsv = (value.getClosing_price().subtract(lowest).multiply(BigDecimal.valueOf(100))).divide(highest.subtract(lowest), ConnConfig.SCALE, RoundingMode.HALF_UP);
                         stockMid.setRsv(rsv);
                     } else {
-                        stockMid.setRsv(new BigDecimal("0.0"));
+                        stockMid.setRsv(new BigDecimal(ConnConfig.INITIAL));
                     }
                     stockMid.setK(rsv);
                     stockMid.setD(rsv);
                     stockMid.setJ(rsv);
-                    stockMid.setUp6(new BigDecimal("0.0"));
-                    stockMid.setUp12(new BigDecimal("0.0"));
-                    stockMid.setUp24(new BigDecimal("0.0"));
-                    stockMid.setDown6(new BigDecimal("0.0"));
-                    stockMid.setDown12(new BigDecimal("0.0"));
-                    stockMid.setDown24(new BigDecimal("0.0"));
+                    stockMid.setUp6(new BigDecimal(ConnConfig.INITIAL));
+                    stockMid.setUp12(new BigDecimal(ConnConfig.INITIAL));
+                    stockMid.setUp24(new BigDecimal(ConnConfig.INITIAL));
+                    stockMid.setDown6(new BigDecimal(ConnConfig.INITIAL));
+                    stockMid.setDown12(new BigDecimal(ConnConfig.INITIAL));
+                    stockMid.setDown24(new BigDecimal(ConnConfig.INITIAL));
 
                     stockState.put(key, stockMid);
                 } else {
@@ -117,8 +117,8 @@ public class stock_test {
                         StockMid last_Stock = stockState.get(last_key);
                         BeanUtils.copyProperties(stockMid, value);
                         BigDecimal closing_diff = value.getClosing_price().subtract(last_Stock.getClosing_price());
-                        BigDecimal ema12 = (BigDecimal.valueOf(2).multiply(value.getClosing_price()).add(BigDecimal.valueOf(11).multiply(last_Stock.getEma12()))).divide(BigDecimal.valueOf(13), 6, RoundingMode.HALF_UP);
-                        BigDecimal ema26 = (BigDecimal.valueOf(2).multiply(value.getClosing_price()).add(BigDecimal.valueOf(24).multiply(last_Stock.getEma26()))).divide(BigDecimal.valueOf(26), 6, RoundingMode.HALF_UP);
+                        BigDecimal ema12 = (BigDecimal.valueOf(2).multiply(value.getClosing_price()).add(BigDecimal.valueOf(11).multiply(last_Stock.getEma12()))).divide(BigDecimal.valueOf(13), ConnConfig.SCALE, RoundingMode.HALF_UP);
+                        BigDecimal ema26 = (BigDecimal.valueOf(2).multiply(value.getClosing_price()).add(BigDecimal.valueOf(24).multiply(last_Stock.getEma26()))).divide(BigDecimal.valueOf(26), ConnConfig.SCALE, RoundingMode.HALF_UP);
 
                         stockMid.setRsv(value.getRsv());
                         stockMid.setEma12(ema12);
@@ -129,33 +129,33 @@ public class stock_test {
                         if (closing_diff.compareTo(BigDecimal.valueOf(0)) > 0) {
                             stockMid.setObv(last_Stock.getObv().add(value.getDeal_amount()));
 
-                            stockMid.setUp6((closing_diff.add(last_Stock.getUp6().multiply(BigDecimal.valueOf(5)))).divide(BigDecimal.valueOf(6), 6, RoundingMode.HALF_UP));
-                            stockMid.setUp12((closing_diff.add(last_Stock.getUp12().multiply(BigDecimal.valueOf(11)))).divide(BigDecimal.valueOf(12), 6, RoundingMode.HALF_UP));
-                            stockMid.setUp24((closing_diff.add(last_Stock.getUp24().multiply(BigDecimal.valueOf(23)))).divide(BigDecimal.valueOf(24), 6, RoundingMode.HALF_UP));
+                            stockMid.setUp6((closing_diff.add(last_Stock.getUp6().multiply(BigDecimal.valueOf(5)))).divide(BigDecimal.valueOf(6), ConnConfig.SCALE, RoundingMode.HALF_UP));
+                            stockMid.setUp12((closing_diff.add(last_Stock.getUp12().multiply(BigDecimal.valueOf(11)))).divide(BigDecimal.valueOf(12), ConnConfig.SCALE, RoundingMode.HALF_UP));
+                            stockMid.setUp24((closing_diff.add(last_Stock.getUp24().multiply(BigDecimal.valueOf(23)))).divide(BigDecimal.valueOf(24), ConnConfig.SCALE, RoundingMode.HALF_UP));
                             ;
-                            stockMid.setDown6(last_Stock.getDown6().abs().multiply(BigDecimal.valueOf(5)).divide(BigDecimal.valueOf(6), 6, RoundingMode.HALF_UP));
-                            stockMid.setDown12(last_Stock.getDown12().abs().multiply(BigDecimal.valueOf(11)).divide(BigDecimal.valueOf(12), 6, RoundingMode.HALF_UP));
-                            stockMid.setDown24(last_Stock.getDown24().abs().multiply(BigDecimal.valueOf(23)).divide(BigDecimal.valueOf(24), 6, RoundingMode.HALF_UP));
+                            stockMid.setDown6(last_Stock.getDown6().abs().multiply(BigDecimal.valueOf(5)).divide(BigDecimal.valueOf(6), ConnConfig.SCALE, RoundingMode.HALF_UP));
+                            stockMid.setDown12(last_Stock.getDown12().abs().multiply(BigDecimal.valueOf(11)).divide(BigDecimal.valueOf(12), ConnConfig.SCALE, RoundingMode.HALF_UP));
+                            stockMid.setDown24(last_Stock.getDown24().abs().multiply(BigDecimal.valueOf(23)).divide(BigDecimal.valueOf(24), ConnConfig.SCALE, RoundingMode.HALF_UP));
                         } else if (closing_diff.compareTo(BigDecimal.valueOf(0)) < 0) {
                             stockMid.setObv(last_Stock.getObv().subtract(value.getDeal_amount()));
-                            stockMid.setDown6((closing_diff.abs().add(last_Stock.getDown6().multiply(BigDecimal.valueOf(5)))).divide(BigDecimal.valueOf(6), 6, RoundingMode.HALF_UP));
-                            stockMid.setDown12((closing_diff.abs().add(last_Stock.getDown12().multiply(BigDecimal.valueOf(11)))).divide(BigDecimal.valueOf(12), 6, RoundingMode.HALF_UP));
-                            stockMid.setDown24((closing_diff.abs().add(last_Stock.getDown24().multiply(BigDecimal.valueOf(23)))).divide(BigDecimal.valueOf(24), 6, RoundingMode.HALF_UP));
-                            stockMid.setUp6(last_Stock.getUp6().multiply(BigDecimal.valueOf(5)).divide(BigDecimal.valueOf(6), 6, RoundingMode.HALF_UP));
-                            stockMid.setUp12(last_Stock.getUp12().multiply(BigDecimal.valueOf(11)).divide(BigDecimal.valueOf(12), 6, RoundingMode.HALF_UP));
-                            stockMid.setUp24(last_Stock.getUp24().multiply(BigDecimal.valueOf(23)).divide(BigDecimal.valueOf(24), 6, RoundingMode.HALF_UP));
+                            stockMid.setDown6((closing_diff.abs().add(last_Stock.getDown6().multiply(BigDecimal.valueOf(5)))).divide(BigDecimal.valueOf(6), ConnConfig.SCALE, RoundingMode.HALF_UP));
+                            stockMid.setDown12((closing_diff.abs().add(last_Stock.getDown12().multiply(BigDecimal.valueOf(11)))).divide(BigDecimal.valueOf(12), ConnConfig.SCALE, RoundingMode.HALF_UP));
+                            stockMid.setDown24((closing_diff.abs().add(last_Stock.getDown24().multiply(BigDecimal.valueOf(23)))).divide(BigDecimal.valueOf(24), ConnConfig.SCALE, RoundingMode.HALF_UP));
+                            stockMid.setUp6(last_Stock.getUp6().multiply(BigDecimal.valueOf(5)).divide(BigDecimal.valueOf(6), ConnConfig.SCALE, RoundingMode.HALF_UP));
+                            stockMid.setUp12(last_Stock.getUp12().multiply(BigDecimal.valueOf(11)).divide(BigDecimal.valueOf(12), ConnConfig.SCALE, RoundingMode.HALF_UP));
+                            stockMid.setUp24(last_Stock.getUp24().multiply(BigDecimal.valueOf(23)).divide(BigDecimal.valueOf(24), ConnConfig.SCALE, RoundingMode.HALF_UP));
                         } else {
                             stockMid.setObv(last_Stock.getObv());
-                            stockMid.setDown6(last_Stock.getDown6().abs().multiply(BigDecimal.valueOf(5)).divide(BigDecimal.valueOf(6), 6, RoundingMode.HALF_UP));
-                            stockMid.setDown12(last_Stock.getDown12().abs().multiply(BigDecimal.valueOf(11)).divide(BigDecimal.valueOf(12), 6, RoundingMode.HALF_UP));
-                            stockMid.setDown24(last_Stock.getDown24().abs().multiply(BigDecimal.valueOf(23)).divide(BigDecimal.valueOf(24), 6, RoundingMode.HALF_UP));
-                            stockMid.setUp6(last_Stock.getUp6().multiply(BigDecimal.valueOf(5)).divide(BigDecimal.valueOf(6), 6, RoundingMode.HALF_UP));
-                            stockMid.setUp12(last_Stock.getUp12().multiply(BigDecimal.valueOf(11)).divide(BigDecimal.valueOf(12), 6, RoundingMode.HALF_UP));
-                            stockMid.setUp24(last_Stock.getUp24().multiply(BigDecimal.valueOf(23)).divide(BigDecimal.valueOf(24), 6, RoundingMode.HALF_UP));
+                            stockMid.setDown6(last_Stock.getDown6().abs().multiply(BigDecimal.valueOf(5)).divide(BigDecimal.valueOf(6), ConnConfig.SCALE, RoundingMode.HALF_UP));
+                            stockMid.setDown12(last_Stock.getDown12().abs().multiply(BigDecimal.valueOf(11)).divide(BigDecimal.valueOf(12), ConnConfig.SCALE, RoundingMode.HALF_UP));
+                            stockMid.setDown24(last_Stock.getDown24().abs().multiply(BigDecimal.valueOf(23)).divide(BigDecimal.valueOf(24), ConnConfig.SCALE, RoundingMode.HALF_UP));
+                            stockMid.setUp6(last_Stock.getUp6().multiply(BigDecimal.valueOf(5)).divide(BigDecimal.valueOf(6), ConnConfig.SCALE, RoundingMode.HALF_UP));
+                            stockMid.setUp12(last_Stock.getUp12().multiply(BigDecimal.valueOf(11)).divide(BigDecimal.valueOf(12), ConnConfig.SCALE, RoundingMode.HALF_UP));
+                            stockMid.setUp24(last_Stock.getUp24().multiply(BigDecimal.valueOf(23)).divide(BigDecimal.valueOf(24), ConnConfig.SCALE, RoundingMode.HALF_UP));
 
                         }
-                        BigDecimal k = (value.getRsv().add(last_Stock.getK().multiply(BigDecimal.valueOf(2)))).divide(BigDecimal.valueOf(3), 6, RoundingMode.HALF_UP);
-                        BigDecimal d = (k.add(last_Stock.getD().multiply(BigDecimal.valueOf(2)))).divide(BigDecimal.valueOf(3), 6, RoundingMode.HALF_UP);
+                        BigDecimal k = (value.getRsv().add(last_Stock.getK().multiply(BigDecimal.valueOf(2)))).divide(BigDecimal.valueOf(3), ConnConfig.SCALE, RoundingMode.HALF_UP);
+                        BigDecimal d = (k.add(last_Stock.getD().multiply(BigDecimal.valueOf(2)))).divide(BigDecimal.valueOf(3), ConnConfig.SCALE, RoundingMode.HALF_UP);
                         stockMid.setK(k);
                         stockMid.setD(d);
                         stockMid.setJ(k.multiply(BigDecimal.valueOf(3)).subtract(d.multiply(BigDecimal.valueOf(2))));
