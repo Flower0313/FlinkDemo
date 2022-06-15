@@ -23,5 +23,5 @@ public class CommonEnv {
 
     public static final String SQL_PASSWORD = "root";
 
-    public static final String JDBC="jdbc:mysql://hadoop102:3306/test?useSSL=false";
+    public static final String JDBC="jdbc:mysql://127.0.0.1:3306/spider_base?useSSL=false";
 }

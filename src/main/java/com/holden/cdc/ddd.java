@@ -2,7 +2,9 @@ package com.holden.cdc;
 
 import com.alibaba.fastjson.JSONObject;
 import com.holden.bean.OdsStock;
+import com.holden.bean.SensorReading;
 import com.holden.bean.StockMid;
+import com.mysql.cj.jdbc.Driver;
 import com.ververica.cdc.connectors.mysql.MySqlSource;
 import com.ververica.cdc.connectors.mysql.table.StartupOptions;
 import com.ververica.cdc.debezium.DebeziumSourceFunction;
@@ -11,15 +13,26 @@ import org.apache.flink.api.common.functions.RichMapFunction;
 import org.apache.flink.api.common.state.MapState;
 import org.apache.flink.api.common.state.MapStateDescriptor;
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.connector.jdbc.JdbcConnectionOptions;
+import org.apache.flink.connector.jdbc.JdbcExecutionOptions;
+import org.apache.flink.connector.jdbc.JdbcSink;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.datastream.KeyedStream;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
+import org.apache.logging.log4j.core.appender.db.jdbc.JdbcAppender;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static com.holden.common.CommonEnv.JDBC;
+import static com.holden.common.CommonEnv.SQL_PASSWORD;
 
 /**
  * @ClassName FlinkDemo-ddd
@@ -39,7 +52,7 @@ public class ddd {
                 .username("root")
                 .password("root")
                 .databaseList("spider_base")
-                .tableList("spider_base.ods_stock")
+                .tableList("spider_base.ods_stock_online")
                 .startupOptions(StartupOptions.initial())
                 .deserializer(new MyCustomerDeserialization())
                 .build();
@@ -66,7 +79,7 @@ public class ddd {
             @Override
             public void close() throws Exception {
                 stockState.clear();
-                System.out.println(atomicInteger);
+                System.out.println("结束了:" + atomicInteger);
             }
 
             @Override
@@ -165,8 +178,50 @@ public class ddd {
                 return stockMid;
             }
         });
-
         result.print();
+
+        result.addSink(JdbcSink.sink(
+                "INSERT INTO ods_stock_result " +
+                        "VALUES" +
+                        "(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                (ps, t) -> {
+                    ps.setString(1, t.getName());
+                    ps.setInt(2, t.getRk());
+                    ps.setString(3, t.getCode());
+                    ps.setString(4, t.getDate());
+                    ps.setBigDecimal(5, t.getDeal_amount());
+                    ps.setBigDecimal(6, t.getClosing_price());
+                    ps.setBigDecimal(7, t.getEma12());
+                    ps.setBigDecimal(8, t.getEma26());
+                    ps.setBigDecimal(9, t.getDiff());
+                    ps.setBigDecimal(10, t.getClosing_diff());
+                    ps.setBigDecimal(11, t.getLast_closing());
+                    ps.setBigDecimal(12, t.getObv());
+                    ps.setBigDecimal(13, t.getRsv());
+                    ps.setBigDecimal(14, t.getUp6());
+                    ps.setBigDecimal(15, t.getDown6());
+                    ps.setBigDecimal(16, t.getUp12());
+                    ps.setBigDecimal(17, t.getDown12());
+                    ps.setBigDecimal(18, t.getUp24());
+                    ps.setBigDecimal(19, t.getDown24());
+                    ps.setBigDecimal(20, t.getK());
+                    ps.setBigDecimal(21, t.getD());
+                    ps.setBigDecimal(22, t.getJ());
+                },
+                new JdbcExecutionOptions.Builder()
+                        .withBatchSize(1000)
+                        .build(),
+                new JdbcConnectionOptions.JdbcConnectionOptionsBuilder()
+                        .withUrl("jdbc:mysql://127.0.0.1:3306/spider_base?useSSL=false")
+                        .withUsername("root")
+                        .withPassword("root")
+                        .withDriverName(Driver.class.getName())
+                        .build()
+        ));
+
+
+
+
         env.execute();
     }
 }
