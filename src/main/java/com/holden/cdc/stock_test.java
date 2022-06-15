@@ -21,6 +21,7 @@ import java.math.RoundingMode;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
+
 /**
  * @ClassName FlinkDemo-stock_test
  * @Author Holden_—__——___———____————_____Xiao
@@ -28,10 +29,9 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @Describe
  */
 public class stock_test {
-    public static void main(String[] args) throws Exception {
+    public void main(String[] args) throws Exception {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(1);
-
         AtomicInteger atomicInteger = new AtomicInteger(1);
 
         DebeziumSourceFunction<String> mysql = MySqlSource.<String>builder()
@@ -40,7 +40,7 @@ public class stock_test {
                 .username("root")
                 .password("root")
                 .databaseList("spider_base")
-                .tableList("spider_base.ods_stock_online")
+                .tableList("spider_base.ods_stock")
                 .startupOptions(StartupOptions.initial())
                 .deserializer(new MyCustomerDeserialization())
                 .build();
@@ -67,11 +67,11 @@ public class stock_test {
             @Override
             public void close() throws Exception {
                 stockState.clear();
+                System.out.println(atomicInteger);
             }
 
             @Override
             public StockMid map(OdsStock value) throws Exception {
-                System.out.println(atomicInteger);
                 atomicInteger.incrementAndGet();
                 StockMid stockMid = new StockMid();
                 String key = value.getCode() + "-" + value.getRk();
