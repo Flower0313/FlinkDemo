@@ -31,5 +31,8 @@ public class OdsStock {
     private BigDecimal rsv;
     private BigDecimal highest;
     private BigDecimal lowest;
+    @Builder.Default
+    private BigDecimal sar_high = new BigDecimal(0);
+    private BigDecimal sar_low;
     private String table;
 }

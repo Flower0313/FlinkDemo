@@ -11,6 +11,8 @@ import org.apache.commons.beanutils.BeanUtils;
 import org.apache.flink.api.common.functions.RichMapFunction;
 import org.apache.flink.api.common.state.MapState;
 import org.apache.flink.api.common.state.MapStateDescriptor;
+import org.apache.flink.api.common.state.ValueState;
+import org.apache.flink.api.common.state.ValueStateDescriptor;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.jdbc.JdbcConnectionOptions;
 import org.apache.flink.connector.jdbc.JdbcExecutionOptions;
@@ -65,11 +67,101 @@ public class SAR {
                     .highest(data.getBigDecimal("highest"))
                     .lowest(data.getBigDecimal("lowest"))
                     .table(jsonObject.getString("table"))
+                    .sar_high(data.getBigDecimal("sar_high"))
+                    .sar_low(data.getBigDecimal("sar_low"))
                     .build();
         }).keyBy(OdsStock::getCode);
 
+        SingleOutputStreamOperator<StockMid> result = keyedStream.map(new RichMapFunction<OdsStock, StockMid>() {
+            private ValueState<BigDecimal> sar_af;
+            private ValueState<BigDecimal> sar;
+            private ValueState<BigDecimal> sar_high;
+            private ValueState<BigDecimal> sar_low;
+            private ValueState<Boolean> sar_bull;
+            private ValueState<String> test;
 
+            @Override
+            public void open(Configuration parameters) throws Exception {
+                sar_af = getRuntimeContext().getState(new ValueStateDescriptor<BigDecimal>("sar_state", BigDecimal.class));
+                sar = getRuntimeContext().getState(new ValueStateDescriptor<BigDecimal>("sar_af_state", BigDecimal.class));
+                sar_high = getRuntimeContext().getState(new ValueStateDescriptor<BigDecimal>("sar_high_state", BigDecimal.class));
+                sar_low = getRuntimeContext().getState(new ValueStateDescriptor<BigDecimal>("sar_low_state", BigDecimal.class));
+                sar_bull = getRuntimeContext().getState(new ValueStateDescriptor<Boolean>("sar_bull_state", Boolean.class));
+                test = getRuntimeContext().getState(new ValueStateDescriptor<String>("test", String.class));
 
+            }
+
+            @Override
+            public void close() throws Exception {
+                sar.clear();
+                sar_af.clear();
+                sar_high.clear();
+                sar_low.clear();
+            }
+
+            @Override
+            public StockMid map(OdsStock value) throws Exception {
+                if (value.getRk() == 1) {
+                } else if (value.getRk() == 4) {
+                    System.out.println("sar:" + value.getSar_low());
+
+                } else if (value.getRk() == 5) {
+                    System.out.println("sar:" + value.getSar_low());
+                    sar.update(value.getSar_low());
+                    sar_high.update(value.getSar_high());
+                    sar_low.update(value.getSar_low());
+                    sar_af.update(new BigDecimal("0.02"));
+                    sar_bull.update(true);
+                } else if (value.getRk() > 5) {
+                    //System.out.println(sar.value() + "||" + sar_low.value() + "||" + sar_high.value() + "||" + sar_af.value() + "||" + sar_bull.value());
+                    if (sar_bull.value()) {
+                        BigDecimal tmp_sar = sar.value().add(sar_af.value().multiply(sar_high.value().subtract(sar.value())));
+                        if (value.getHighest().compareTo(sar_high.value()) > 0) {
+                            //更新sar_high
+                            sar_high.update(value.getHighest());
+                            //更新sar_af
+                            if (sar_af.value().add(new BigDecimal("0.02")).compareTo(new BigDecimal("0.2")) > 0) {
+                                sar_af.update(new BigDecimal("0.2"));
+                            } else {
+                                sar_af.update(sar_af.value().add(new BigDecimal("0.02")));
+                            }
+
+                        }
+                        sar.update(tmp_sar);
+                        if (tmp_sar.compareTo(value.getClosing_price()) > 0) {
+                            sar.update(value.getSar_high());
+                            sar_af.update(new BigDecimal("0.02"));
+                            sar_bull.update(false);
+                            System.out.println("sar:" + value.getSar_high());
+                        }
+                        System.out.println("sar:" + tmp_sar);
+                    } else {
+                        BigDecimal tmp_sar = sar.value().add(sar_af.value().multiply(sar_low.value().subtract(sar.value())));
+                        if (value.getLowest().compareTo(sar_low.value()) < 0) {
+                            //更新sar_high
+                            sar_low.update(value.getLowest());
+                            //更新sar_af
+                            if (sar_af.value().add(new BigDecimal("0.02")).compareTo(new BigDecimal("0.2")) > 0) {
+                                sar_af.update(new BigDecimal("0.2"));
+                            } else {
+                                sar_af.update(sar_af.value().add(new BigDecimal("0.02")));
+                            }
+
+                        }
+                        sar.update(tmp_sar);
+                        if (tmp_sar.compareTo(value.getClosing_price()) < 0) {
+                            sar.update(value.getSar_low());
+                            sar_af.update(new BigDecimal("0.02"));
+                            sar_bull.update(true);
+                            System.out.println("sar:" + value.getSar_low());
+                        }
+                        System.out.println("sar:" + tmp_sar);
+                    }
+
+                }
+                return new StockMid();
+            }
+        });
 
 
         env.execute();

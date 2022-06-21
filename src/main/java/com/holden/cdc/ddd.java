@@ -12,6 +12,7 @@ import org.apache.commons.beanutils.BeanUtils;
 import org.apache.flink.api.common.functions.RichMapFunction;
 import org.apache.flink.api.common.state.MapState;
 import org.apache.flink.api.common.state.MapStateDescriptor;
+import org.apache.flink.api.common.state.ValueState;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.jdbc.JdbcConnectionOptions;
 import org.apache.flink.connector.jdbc.JdbcExecutionOptions;
@@ -68,6 +69,8 @@ public class ddd {
                     .highest(data.getBigDecimal("highest"))
                     .lowest(data.getBigDecimal("lowest"))
                     .table(jsonObject.getString("table"))
+                    .sar_high(data.getBigDecimal("sar_high"))
+                    .sar_low(data.getBigDecimal("sar_low"))
                     .build();
         }).keyBy(OdsStock::getCode);
 
@@ -78,6 +81,7 @@ public class ddd {
             @Override
             public void open(Configuration parameters) throws Exception {
                 stockState = getRuntimeContext().getMapState(new MapStateDescriptor<String, StockMid>("my-map", String.class, StockMid.class));
+
             }
 
             @Override

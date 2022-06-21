@@ -39,4 +39,5 @@ public class StockMid {
     private BigDecimal k;
     private BigDecimal d;
     private BigDecimal j;
+    private BigDecimal sar;
 }
