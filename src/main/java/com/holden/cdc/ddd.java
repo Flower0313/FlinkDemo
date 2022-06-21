@@ -20,19 +20,12 @@ import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.datastream.KeyedStream;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
-import org.apache.logging.log4j.core.appender.db.jdbc.JdbcAppender;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.holden.common.CommonEnv.JDBC;
-import static com.holden.common.CommonEnv.SQL_PASSWORD;
 
 /**
  * @ClassName FlinkDemo-ddd
@@ -42,33 +35,44 @@ import static com.holden.common.CommonEnv.SQL_PASSWORD;
  */
 public class ddd {
     public static void main(String[] args) throws Exception {
-        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        //访问本地
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironmentWithWebUI(new Configuration());
         env.setParallelism(1);
-        AtomicInteger atomicInteger = new AtomicInteger(1);
-
         DebeziumSourceFunction<String> mysql = MySqlSource.<String>builder()
                 .hostname("127.0.0.1")
                 .port(3306)
                 .username("root")
                 .password("root")
                 .databaseList("spider_base")
-                .tableList("spider_base.ods_stock_online")
+                .tableList("spider_base.ods_stock")
                 .startupOptions(StartupOptions.initial())
                 .deserializer(new MyCustomerDeserialization())
                 .build();
 
         DataStreamSource<String> mysqlDS = env.addSource(mysql);
 
-        //转为POJO类并且keyBy分区
+        //转为POJO类并且keyBy根据code分区
         KeyedStream<OdsStock, String> keyedStream = mysqlDS.map(x -> {
             JSONObject jsonObject = JSONObject.parseObject(x);
             JSONObject data = jsonObject.getJSONObject("data");
-            return new OdsStock(data.getString("code"), data.getString("name"), data.getBigDecimal("closing_price"), data.getBigDecimal("last_closing"), data.getString("date"), data.getBigDecimal("deal_amount"), data.getInteger("rk"), data.getBigDecimal("x"), data.getBigDecimal("i"), data.getBigDecimal("rsv"), data.getBigDecimal("highest"), data.getBigDecimal("lowest"), jsonObject.getString("table"));
+            return OdsStock.builder().code(data.getString("code"))
+                    .name(data.getString("name"))
+                    .closing_price(data.getBigDecimal("closing_price"))
+                    .last_closing(data.getBigDecimal("last_closing"))
+                    .date(data.getString("date"))
+                    .deal_amount(data.getBigDecimal("deal_amount"))
+                    .rk(data.getInteger("rk"))
+                    .x(data.getBigDecimal("x"))
+                    .i(data.getBigDecimal("i"))
+                    .rsv(data.getBigDecimal("rsv"))
+                    .highest(data.getBigDecimal("highest"))
+                    .lowest(data.getBigDecimal("lowest"))
+                    .table(jsonObject.getString("table"))
+                    .build();
         }).keyBy(OdsStock::getCode);
 
 
         SingleOutputStreamOperator<StockMid> result = keyedStream.map(new RichMapFunction<OdsStock, StockMid>() {
-            //map状态
             private MapState<String, StockMid> stockState;
 
             @Override
@@ -79,16 +83,14 @@ public class ddd {
             @Override
             public void close() throws Exception {
                 stockState.clear();
-                System.out.println("结束了:" + atomicInteger);
             }
 
             @Override
             public StockMid map(OdsStock value) throws Exception {
-                atomicInteger.incrementAndGet();
                 StockMid stockMid = new StockMid();
-                String key = value.getCode() + "-" + value.getRk();
+                String key = value.getCode() + ConnConfig.delimiter + value.getRk();
                 //第一条数据
-                if (value.getRk() == 1) {
+                if ("1".equals(String.valueOf(value.getRk()))) {
                     BigDecimal highest = value.getHighest();
                     BigDecimal lowest = value.getLowest();
                     BeanUtils.copyProperties(stockMid, value);
@@ -122,7 +124,7 @@ public class ddd {
                     if (!stockState.isEmpty()) {
                         String last_key = value.getCode() + "-" + (value.getRk() - 1);
                         //手动移除掉前面的状态，不然后面的读取速度会变慢
-                        if (value.getRk() >= 3) {
+                        if (value.getRk() >= ConnConfig.REMOVE_FLAG) {
                             stockState.remove(value.getCode() + "-" + (value.getRk() - 2));
                         }
                         //取上一条记录
@@ -177,11 +179,11 @@ public class ddd {
                 }
                 return stockMid;
             }
-        });
+        }).setParallelism(4);
         result.print();
 
         result.addSink(JdbcSink.sink(
-                "INSERT INTO ods_stock_result " +
+                "INSERT INTO ods_stock_step_two " +
                         "VALUES" +
                         "(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 (ps, t) -> {
@@ -209,7 +211,7 @@ public class ddd {
                     ps.setBigDecimal(22, t.getJ());
                 },
                 new JdbcExecutionOptions.Builder()
-                        .withBatchSize(1000)
+                        .withBatchSize(1).withMaxRetries(1) //这里批次大小来提交，这里最好写1次，因为我们处理的是历史数据
                         .build(),
                 new JdbcConnectionOptions.JdbcConnectionOptionsBuilder()
                         .withUrl("jdbc:mysql://127.0.0.1:3306/spider_base?useSSL=false")
@@ -218,8 +220,6 @@ public class ddd {
                         .withDriverName(Driver.class.getName())
                         .build()
         ));
-
-
 
 
         env.execute();

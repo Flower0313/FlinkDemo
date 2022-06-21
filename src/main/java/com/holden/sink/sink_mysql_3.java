@@ -44,13 +44,13 @@ sink_mysql_3 {
 
             @Override
             public void open(Configuration parameters) throws Exception {
-                System.out.println("连接数据库");
                 conn = DriverManager.getConnection(JDBC, "root", SQL_PASSWORD);
                 ps = conn.prepareStatement("insert into sensor values(?, ?, ?)");
             }
 
             @Override
             public void close() throws Exception {
+                ps.executeUpdate();
                 ps.close();
                 conn.close();
             }
