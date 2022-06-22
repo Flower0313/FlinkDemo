@@ -3,6 +3,7 @@ package com.holden.cdc;
 import com.alibaba.fastjson.JSONObject;
 import com.holden.bean.OdsStock;
 import com.holden.bean.StockMid;
+import com.mysql.cj.jdbc.Driver;
 import com.ververica.cdc.connectors.mysql.MySqlSource;
 import com.ververica.cdc.connectors.mysql.table.StartupOptions;
 import com.ververica.cdc.debezium.DebeziumSourceFunction;
@@ -13,6 +14,9 @@ import org.apache.flink.api.common.state.MapStateDescriptor;
 import org.apache.flink.api.common.state.ValueState;
 import org.apache.flink.api.common.state.ValueStateDescriptor;
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.connector.jdbc.JdbcConnectionOptions;
+import org.apache.flink.connector.jdbc.JdbcExecutionOptions;
+import org.apache.flink.connector.jdbc.JdbcSink;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.datastream.KeyedStream;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
@@ -33,8 +37,8 @@ import static com.holden.cdc.ConnConfig.*;
  */
 public class ddd {
     public static void main(String[] args) throws Exception {
-
         //访问本地
+        //若调成多并行度，那么rk=10可能会先进来，虽然状态是共享的，但是我们的取9的操作就为null了，所以并行度必须为1，因为我这是特殊情况，必须要有序
         StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironmentWithWebUI(new Configuration());
         env.setParallelism(1);
         DebeziumSourceFunction<String> mysql = MySqlSource.<String>builder()
@@ -43,7 +47,7 @@ public class ddd {
                 .username("root")
                 .password("root")
                 .databaseList("spider_base")
-                .tableList("spider_base.ods_stock")
+                .tableList("spider_base.ods_stock_step_one")
                 .startupOptions(StartupOptions.initial())
                 .deserializer(new MyCustomerDeserialization())
                 .build();
@@ -135,6 +139,7 @@ public class ddd {
                     stockMid.setRsi6(INITIAL);
                     stockMid.setRsi12(INITIAL);
                     stockMid.setRsi24(INITIAL);
+                    stockMid.setSar(INITIAL);
 
                     stockState.put(key, stockMid);
                 } else {
@@ -217,9 +222,9 @@ public class ddd {
                         BigDecimal dea = dif.multiply(new BigDecimal("2")).add(last_Stock.getDea().multiply(new BigDecimal("8"))).divide(new BigDecimal(10), SCALE, RoundingMode.HALF_UP);
                         stockMid.setDea(dea);
                         stockMid.setMacd(dif.subtract(dea).multiply(new BigDecimal("2")));
-                        stockMid.setRsi6(up6.divide(up6.add(down6), SCALE, RoundingMode.HALF_UP));
-                        stockMid.setRsi12(up12.divide(up12.add(down12), SCALE, RoundingMode.HALF_UP));
-                        stockMid.setRsi24(up24.divide(up24.add(down24), SCALE, RoundingMode.HALF_UP));
+                        stockMid.setRsi6(up6.divide(up6.add(down6).doubleValue() == 0 ? new BigDecimal(1) : up6.add(down6), SCALE, RoundingMode.HALF_UP));
+                        stockMid.setRsi12(up12.divide(up12.add(down12).doubleValue() == 0 ? new BigDecimal(1) : up12.add(down12), SCALE, RoundingMode.HALF_UP));
+                        stockMid.setRsi24(up24.divide(up24.add(down24).doubleValue() == 0 ? new BigDecimal(1) : up24.add(down24), SCALE, RoundingMode.HALF_UP));
 
                         //Holden SAR指标
                         if (value.getRk() == ConnConfig.SAR_START_FLAG || value.getRk() == (SAR_START_FLAG + 1)) {
@@ -268,13 +273,13 @@ public class ddd {
                 }
                 return stockMid;
             }
-        }).setParallelism(4);
+        });
         result.print();
 
-        /*result.addSink(JdbcSink.sink(
+        result.addSink(JdbcSink.sink(
                 "INSERT INTO ods_stock_step_two " +
                         "VALUES" +
-                        "(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                        "(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 (ps, t) -> {
                     ps.setString(1, t.getName());
                     ps.setInt(2, t.getRk());
@@ -284,7 +289,7 @@ public class ddd {
                     ps.setBigDecimal(6, t.getClosing_price());
                     ps.setBigDecimal(7, t.getEma12());
                     ps.setBigDecimal(8, t.getEma26());
-                    ps.setBigDecimal(9, t.getDiff());
+                    ps.setBigDecimal(9, t.getDif());
                     ps.setBigDecimal(10, t.getClosing_diff());
                     ps.setBigDecimal(11, t.getLast_closing());
                     ps.setBigDecimal(12, t.getObv());
@@ -295,12 +300,18 @@ public class ddd {
                     ps.setBigDecimal(17, t.getDown12());
                     ps.setBigDecimal(18, t.getUp24());
                     ps.setBigDecimal(19, t.getDown24());
-                    ps.setBigDecimal(20, t.getK());
-                    ps.setBigDecimal(21, t.getD());
-                    ps.setBigDecimal(22, t.getJ());
+                    ps.setBigDecimal(20,t.getRsi6());
+                    ps.setBigDecimal(21,t.getRsi12());
+                    ps.setBigDecimal(22,t.getRsi24());
+                    ps.setBigDecimal(23, t.getK());
+                    ps.setBigDecimal(24, t.getD());
+                    ps.setBigDecimal(25, t.getJ());
+                    ps.setBigDecimal(26, t.getSar());
+                    ps.setBigDecimal(27, t.getDea());
+                    ps.setBigDecimal(28, t.getMacd());
                 },
                 new JdbcExecutionOptions.Builder()
-                        .withBatchSize(1).withMaxRetries(1) //这里批次大小来提交，这里最好写1次，因为我们处理的是历史数据
+                        .withBatchSize(1).withMaxRetries(10) //这里批次大小来提交，这里最好写1次，因为我们处理的是历史数据
                         .build(),
                 new JdbcConnectionOptions.JdbcConnectionOptionsBuilder()
                         .withUrl("jdbc:mysql://127.0.0.1:3306/spider_base?useSSL=false")
@@ -308,7 +319,7 @@ public class ddd {
                         .withPassword("root")
                         .withDriverName(Driver.class.getName())
                         .build()
-        ));*/
+        ));
 
 
         env.execute();

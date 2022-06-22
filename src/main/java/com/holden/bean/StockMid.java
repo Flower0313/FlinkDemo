@@ -44,9 +44,7 @@ public class StockMid {
     private BigDecimal k;
     private BigDecimal d;
     private BigDecimal j;
-    @Builder.Default
-    private BigDecimal sar = new BigDecimal("0.0");
-    @Builder.Default
-    private BigDecimal dea = new BigDecimal("0.0");
-    private BigDecimal macd = new BigDecimal("0.0");
+    private BigDecimal sar;
+    private BigDecimal dea ;
+    private BigDecimal macd ;
 }
