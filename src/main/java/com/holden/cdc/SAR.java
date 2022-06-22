@@ -78,7 +78,6 @@ public class SAR {
             private ValueState<BigDecimal> sar_high;
             private ValueState<BigDecimal> sar_low;
             private ValueState<Boolean> sar_bull;
-            private ValueState<String> test;
 
             @Override
             public void open(Configuration parameters) throws Exception {
@@ -87,7 +86,6 @@ public class SAR {
                 sar_high = getRuntimeContext().getState(new ValueStateDescriptor<BigDecimal>("sar_high_state", BigDecimal.class));
                 sar_low = getRuntimeContext().getState(new ValueStateDescriptor<BigDecimal>("sar_low_state", BigDecimal.class));
                 sar_bull = getRuntimeContext().getState(new ValueStateDescriptor<Boolean>("sar_bull_state", Boolean.class));
-                test = getRuntimeContext().getState(new ValueStateDescriptor<String>("test", String.class));
 
             }
 
@@ -101,63 +99,62 @@ public class SAR {
 
             @Override
             public StockMid map(OdsStock value) throws Exception {
-                if (value.getRk() == 1) {
-                } else if (value.getRk() == 4) {
-                    System.out.println("sar:" + value.getSar_low());
-
-                } else if (value.getRk() == 5) {
-                    System.out.println("sar:" + value.getSar_low());
+                if (value.getRk() == 4 || value.getRk() == 5) {
                     sar.update(value.getSar_low());
                     sar_high.update(value.getSar_high());
                     sar_low.update(value.getSar_low());
                     sar_af.update(new BigDecimal("0.02"));
                     sar_bull.update(true);
+                    System.out.println(value.getRk()+"|sar:" + value.getSar_low() + "|sar_bull:" + sar_bull.value() + "|sar_high:" + sar_high.value() + "|sar_low:" + sar_low.value() + "|sar_af:" + sar_af.value());
                 } else if (value.getRk() > 5) {
-                    //System.out.println(sar.value() + "||" + sar_low.value() + "||" + sar_high.value() + "||" + sar_af.value() + "||" + sar_bull.value());
                     if (sar_bull.value()) {
                         BigDecimal tmp_sar = sar.value().add(sar_af.value().multiply(sar_high.value().subtract(sar.value())));
                         if (value.getHighest().compareTo(sar_high.value()) > 0) {
                             //更新sar_high
                             sar_high.update(value.getHighest());
                             //更新sar_af
-                            if (sar_af.value().add(new BigDecimal("0.02")).compareTo(new BigDecimal("0.2")) > 0) {
+                            if ((sar_af.value().add(new BigDecimal("0.02"))).compareTo(new BigDecimal("0.2")) > 0) {
                                 sar_af.update(new BigDecimal("0.2"));
                             } else {
                                 sar_af.update(sar_af.value().add(new BigDecimal("0.02")));
                             }
-
                         }
                         sar.update(tmp_sar);
                         if (tmp_sar.compareTo(value.getClosing_price()) > 0) {
                             sar.update(value.getSar_high());
                             sar_af.update(new BigDecimal("0.02"));
                             sar_bull.update(false);
-                            System.out.println("sar:" + value.getSar_high());
+                            sar_high.update(value.getSar_high());
+                            sar_low.update(value.getSar_low());
+                            System.out.println(value.getRk()+"|sar:" + value.getSar_high() + "|sar_bull:" + sar_bull.value() + "|sar_high:" + sar_high.value() + "|sar_low:" + sar_low.value() + "|sar_af:" + sar_af.value());
+                        }else{
+                            System.out.println(value.getRk()+"|sar:" + tmp_sar + "|sar_bull:" + sar_bull.value() + "|sar_high:" + sar_high.value() + "|sar_low:" + sar_low.value() + "|sar_af:" + sar_af.value());
                         }
-                        System.out.println("sar:" + tmp_sar);
+
                     } else {
                         BigDecimal tmp_sar = sar.value().add(sar_af.value().multiply(sar_low.value().subtract(sar.value())));
                         if (value.getLowest().compareTo(sar_low.value()) < 0) {
                             //更新sar_high
                             sar_low.update(value.getLowest());
                             //更新sar_af
-                            if (sar_af.value().add(new BigDecimal("0.02")).compareTo(new BigDecimal("0.2")) > 0) {
+                            if ((sar_af.value().add(new BigDecimal("0.02"))).compareTo(new BigDecimal("0.2")) > 0) {
                                 sar_af.update(new BigDecimal("0.2"));
                             } else {
                                 sar_af.update(sar_af.value().add(new BigDecimal("0.02")));
                             }
-
                         }
                         sar.update(tmp_sar);
                         if (tmp_sar.compareTo(value.getClosing_price()) < 0) {
                             sar.update(value.getSar_low());
                             sar_af.update(new BigDecimal("0.02"));
                             sar_bull.update(true);
-                            System.out.println("sar:" + value.getSar_low());
+                            sar_high.update(value.getSar_high());
+                            sar_low.update(value.getSar_low());
+                            System.out.println(value.getRk()+"|sar:" + value.getSar_low() + "|sar_bull:" + sar_bull.value() + "|sar_high:" + sar_high.value() + "|sar_low:" + sar_low.value() + "|sar_af:" + sar_af.value());
+                        }else{
+                            System.out.println(value.getRk()+"|sar:" + tmp_sar+ "|sar_bull:" + sar_bull.value() + "|sar_high:" + sar_high.value() + "|sar_low:" + sar_low.value() + "|sar_af:" + sar_af.value());
                         }
-                        System.out.println("sar:" + tmp_sar);
                     }
-
                 }
                 return new StockMid();
             }

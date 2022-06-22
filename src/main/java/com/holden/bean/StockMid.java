@@ -1,6 +1,7 @@
 package com.holden.bean;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -16,6 +17,7 @@ import java.math.BigDecimal;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 public class StockMid {
     private String name;
     private int rk;
@@ -25,7 +27,7 @@ public class StockMid {
     private BigDecimal closing_price;
     private BigDecimal ema12;
     private BigDecimal ema26;
-    private BigDecimal diff;
+    private BigDecimal dif;
     private BigDecimal closing_diff;
     private BigDecimal last_closing;
     private BigDecimal obv;
@@ -36,8 +38,15 @@ public class StockMid {
     private BigDecimal down12;
     private BigDecimal up24;
     private BigDecimal down24;
+    private BigDecimal rsi6;
+    private BigDecimal rsi12;
+    private BigDecimal rsi24;
     private BigDecimal k;
     private BigDecimal d;
     private BigDecimal j;
-    private BigDecimal sar;
+    @Builder.Default
+    private BigDecimal sar = new BigDecimal("0.0");
+    @Builder.Default
+    private BigDecimal dea = new BigDecimal("0.0");
+    private BigDecimal macd = new BigDecimal("0.0");
 }

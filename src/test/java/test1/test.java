@@ -1,7 +1,10 @@
 package test1;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
+import java.math.*;
+
 
 /**
  * @ClassName FlinkDemo-test
@@ -11,13 +14,8 @@ import java.util.Map;
  */
 public class test {
     public static void main(String[] args) {
-        Map<String, String> diyMap = new HashMap<>();
-        diyMap.put("1002", "flower");
-        diyMap.put("1003", "holden");
-        /*for (Map.Entry<String, String> entry : diyMap.entrySet()) {
-            System.out.println("key=" + entry.getKey() + ",value=" + entry.getValue());
-        }*/
-        System.out.println(diyMap.toString());
-        System.out.println((7*6*5*4*3*2)/((5*4*3*2)*2));
+       BigDecimal up6;
+       up6 = new BigDecimal(1);
+        System.out.println(up6);
     }
 }
