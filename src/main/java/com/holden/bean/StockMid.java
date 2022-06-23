@@ -47,4 +47,7 @@ public class StockMid {
     private BigDecimal sar;
     private BigDecimal dea ;
     private BigDecimal macd ;
+    private BigDecimal pdi ;
+    private BigDecimal mdi ;
+    private BigDecimal adx;
 }
