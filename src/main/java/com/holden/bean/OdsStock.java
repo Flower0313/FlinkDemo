@@ -26,13 +26,16 @@ public class OdsStock {
     private String date;
     private BigDecimal deal_amount;
     private int rk;
-    private BigDecimal x;
-    private BigDecimal i;
+    private BigDecimal hhv;
+    private BigDecimal llv;
     private BigDecimal rsv;
     private BigDecimal highest;
     private BigDecimal lowest;
     @Builder.Default
     private BigDecimal sar_high = new BigDecimal(0);
     private BigDecimal sar_low;
+    private BigDecimal tr;
+    private BigDecimal dmp;
+    private BigDecimal dmm;
     private String table;
 }

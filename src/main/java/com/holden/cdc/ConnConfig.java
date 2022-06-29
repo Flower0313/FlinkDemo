@@ -22,5 +22,14 @@ public class ConnConfig {
 
     public final static BigDecimal SAR_AF = new BigDecimal("0.02");
 
+    public final static Integer FIRST_DAY = 1;
+
+    //SAR指标开始天数
     public final static Integer SAR_START_FLAG = 4;
+
+    //DMI指标开始天数
+    public final static Integer DMI_START_FLAG = 14;
+
+    public final static Integer ADX_START_FLAG = 19;
+
 }

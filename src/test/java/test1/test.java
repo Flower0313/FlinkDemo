@@ -14,9 +14,8 @@ import java.math.*;
  */
 public class test {
     public static void main(String[] args) {
-        BigDecimal bigDecimal = new BigDecimal(0).equals(new BigDecimal(0)) ? new BigDecimal(1) : new BigDecimal(2);
-        BigDecimal divide = new BigDecimal(0).divide(new BigDecimal(1), 4, RoundingMode.HALF_UP);
-        System.out.println(bigDecimal);
+        System.out.println(BigDecimal.ZERO);
+        System.out.println(BigDecimal.valueOf(0).equals(BigDecimal.ZERO));
 
     }
 }
