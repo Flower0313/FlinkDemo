@@ -253,10 +253,7 @@
             <scope>compile</scope>
         </dependency>
 
-        <dependency>
-            <groupId></groupId>
-            <artifactId></artifactId>
-        </dependency>
+
 
     </dependencies>
 </project>

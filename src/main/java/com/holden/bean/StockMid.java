@@ -22,7 +22,7 @@ public class StockMid {
     private String name;
     private int rk;
     private String code;
-    private String date;
+    private String ds;
     private BigDecimal deal_amount;
     private BigDecimal closing_price;
     private BigDecimal highest;

@@ -2,7 +2,6 @@ package com.holden.cdc;
 
 import com.alibaba.fastjson.JSONObject;
 import com.holden.bean.OdsStock;
-import com.holden.bean.SensorReading;
 import com.holden.bean.StockMid;
 import com.mysql.cj.jdbc.Driver;
 import com.ververica.cdc.connectors.mysql.MySqlSource;
@@ -49,7 +48,7 @@ public class ddd {
         //访问本地
         //若调成多并行度，那么rk=10可能会先进来，虽然状态是共享的，但是我们的取9的操作就为null了，所以并行度必须为1，因为我这是特殊情况，必须要有序
         //历史数据没办法，除非加状态，但千万级状态太恐怖了
-        StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironmentWithWebUI(new Configuration());
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(1);
         //将状态保存在文件中
         //env.getCheckpointConfig().setCheckpointStorage(new FileSystemCheckpointStorage("file:///T:\\ShangGuiGu\\FlinkDemo\\output\\statebackend"));
@@ -70,11 +69,12 @@ public class ddd {
         KeyedStream<OdsStock, String> keyedStream = mysqlDS.map(x -> {
             JSONObject jsonObject = JSONObject.parseObject(x);
             JSONObject data = jsonObject.getJSONObject("data");
-            return OdsStock.builder().code(data.getString("code"))
+            return OdsStock.builder()
+                    .code(data.getString("code"))
                     .name(data.getString("name"))
                     .closing_price(data.getBigDecimal("closing_price"))
                     .last_closing(data.getBigDecimal("last_closing"))
-                    .date(data.getString("date"))
+                    .ds(data.getString("ds"))
                     .deal_amount(data.getBigDecimal("deal_amount"))
                     .rk(data.getInteger("rk"))
                     .hhv(data.getBigDecimal("x"))
@@ -309,10 +309,10 @@ public class ddd {
                 stockMid.setSar_low(sar_low.value());
 
                 //DMI
-                BigDecimal trex = null;
-                BigDecimal dmpex = null;
-                BigDecimal dmmex = null;
-                BigDecimal mpdi = null;
+                BigDecimal trex = BigDecimal.ZERO;
+                BigDecimal dmpex = BigDecimal.ZERO;
+                BigDecimal dmmex = BigDecimal.ZERO;
+                BigDecimal mpdi = BigDecimal.ZERO;
                 if (value.getRk() < DMI_START_FLAG) {//13天含以前
                     tr_sum.update((tr_sum.value() == null ? BigDecimal.valueOf(0) : tr_sum.value()).add(value.getTr()));
                     dmp_sum.update((dmp_sum.value() == null ? BigDecimal.valueOf(0) : dmp_sum.value()).add(value.getDmp()));
@@ -346,8 +346,6 @@ public class ddd {
                         stockMid.setMdi(mdi);
                         if (mdi.add(pdi).doubleValue() != 0) {
                             mpdi = mdi.subtract(pdi).abs().divide(pdi.add(mdi).doubleValue() == 0 ? BigDecimal.ONE : pdi.add(mdi), SCALE, RoundingMode.HALF_UP).multiply(BigDecimal.valueOf(100));
-                        } else {
-                            mpdi = BigDecimal.ZERO;
                         }
                     }
                     if (value.getRk() <= ADX_START_FLAG) {
@@ -380,7 +378,7 @@ public class ddd {
                     ps.setString(1, t.getName());
                     ps.setInt(2, t.getRk());
                     ps.setString(3, t.getCode());
-                    ps.setString(4, t.getDate());
+                    ps.setString(4, t.getDs());
                     ps.setBigDecimal(5, t.getDeal_amount());
                     ps.setBigDecimal(6, t.getClosing_price());
                     ps.setBigDecimal(7, t.getEma12());
@@ -423,15 +421,12 @@ public class ddd {
                         .withBatchSize(1).withMaxRetries(10) //这里批次大小来提交，这里最好写1次，因为我们处理的是历史数据
                         .build(),
                 new JdbcConnectionOptions.JdbcConnectionOptionsBuilder()
-                        .withUrl("jdbc:mysql://127.0.0.1:3306/spider_base?useSSL=false")
+                        .withUrl("jdbc:mysql://127.0.0.1:3306/spider_base?useSSL=false&useUnicode=true&characterEncoding=UTF-8")
                         .withUsername("root")
                         .withPassword("root")
                         .withDriverName(Driver.class.getName())
                         .build()
         ));
-
-
-
         env.execute();
     }
 }

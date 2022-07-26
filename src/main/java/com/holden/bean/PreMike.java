@@ -8,9 +8,9 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 
 /**
- * @ClassName FlinkDemo-OdsStock
+ * @ClassName FlinkDemo-PreMike
  * @Author Holden_—__——___———____————_____Xiao
- * @Create 2022年6月13日14:30 - 周一
+ * @Create 2022年7月26日21:35 - 周二
  * @Describe
  */
 
@@ -18,24 +18,14 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class OdsStock {
+public class PreMike {
     private String code;
     private String name;
-    private BigDecimal closing_price;
-    private BigDecimal last_closing;
     private String ds;
-    private BigDecimal deal_amount;
     private int rk;
     private BigDecimal hhv;
     private BigDecimal llv;
-    private BigDecimal rsv;
     private BigDecimal highest;
     private BigDecimal lowest;
-    @Builder.Default
-    private BigDecimal sar_high = new BigDecimal(0);
-    private BigDecimal sar_low;
-    private BigDecimal tr;
-    private BigDecimal dmp;
-    private BigDecimal dmm;
-    private String table;
+    private BigDecimal hlc;
 }

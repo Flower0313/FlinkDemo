@@ -58,7 +58,7 @@ public class SAR {
                     .name(data.getString("name"))
                     .closing_price(data.getBigDecimal("closing_price"))
                     .last_closing(data.getBigDecimal("last_closing"))
-                    .date(data.getString("date"))
+                    .ds(data.getString("date"))
                     .deal_amount(data.getBigDecimal("deal_amount"))
                     .rk(data.getInteger("rk"))
                     .hhv(data.getBigDecimal("x"))
