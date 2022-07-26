@@ -23,12 +23,18 @@ import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.datastream.KeyedStream;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.util.Objects;
 
 import static com.holden.cdc.ConnConfig.*;
+import static com.holden.common.CommonEnv.JDBC;
+import static com.holden.common.CommonEnv.SQL_PASSWORD;
 
 
 /**
@@ -41,7 +47,8 @@ public class ddd {
     public static void main(String[] args) throws Exception {
         //访问本地
         //若调成多并行度，那么rk=10可能会先进来，虽然状态是共享的，但是我们的取9的操作就为null了，所以并行度必须为1，因为我这是特殊情况，必须要有序
-        StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironmentWithWebUI(new Configuration());
+        //历史数据没办法，除非加状态，但千万级状态太恐怖了
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(1);
         //将状态保存在文件中
         //env.getCheckpointConfig().setCheckpointStorage(new FileSystemCheckpointStorage("file:///T:\\ShangGuiGu\\FlinkDemo\\output\\statebackend"));
@@ -62,15 +69,16 @@ public class ddd {
         KeyedStream<OdsStock, String> keyedStream = mysqlDS.map(x -> {
             JSONObject jsonObject = JSONObject.parseObject(x);
             JSONObject data = jsonObject.getJSONObject("data");
-            return OdsStock.builder().code(data.getString("code"))
+            return OdsStock.builder()
+                    .code(data.getString("code"))
                     .name(data.getString("name"))
                     .closing_price(data.getBigDecimal("closing_price"))
                     .last_closing(data.getBigDecimal("last_closing"))
-                    .date(data.getString("date"))
+                    .ds(data.getString("ds"))
                     .deal_amount(data.getBigDecimal("deal_amount"))
                     .rk(data.getInteger("rk"))
-                    .x(data.getBigDecimal("x"))
-                    .i(data.getBigDecimal("i"))
+                    .hhv(data.getBigDecimal("x"))
+                    .llv(data.getBigDecimal("i"))
                     .rsv(data.getBigDecimal("rsv"))
                     .highest(data.getBigDecimal("highest"))
                     .lowest(data.getBigDecimal("lowest"))
@@ -135,10 +143,13 @@ public class ddd {
             public StockMid map(OdsStock value) throws Exception {
                 StockMid stockMid = new StockMid();
                 String key = value.getCode() + delimiter + value.getRk();
+                stockMid.setSar_bull(true);
                 //第一条数据
                 if (value.getRk() == FIRST_DAY) {
                     BigDecimal highest = value.getHighest();
                     BigDecimal lowest = value.getLowest();
+                    BigDecimal rsv = BigDecimal.ZERO;
+
                     BeanUtils.copyProperties(stockMid, value);
                     stockMid.setObv(INITIAL);
                     stockMid.setLast_closing(INITIAL);
@@ -147,7 +158,6 @@ public class ddd {
                     stockMid.setEma26(value.getClosing_price());
                     stockMid.setClosing_diff(INITIAL);
 
-                    BigDecimal rsv = BigDecimal.valueOf(0.0);
                     if (!Objects.equals(highest, lowest)) {
                         rsv = (value.getClosing_price().subtract(lowest).multiply(BigDecimal.valueOf(100))).divide(highest.subtract(lowest).equals(BigDecimal.ZERO) ? BigDecimal.ONE : highest.subtract(lowest), SCALE, RoundingMode.HALF_UP);
                         stockMid.setRsv(rsv);
@@ -207,12 +217,6 @@ public class ddd {
                             down6 = last_Stock.getDown6().abs().multiply(BigDecimal.valueOf(5)).divide(BigDecimal.valueOf(6), SCALE, RoundingMode.HALF_UP);
                             down12 = last_Stock.getDown12().abs().multiply(BigDecimal.valueOf(11)).divide(BigDecimal.valueOf(12), SCALE, RoundingMode.HALF_UP);
                             down24 = last_Stock.getDown24().abs().multiply(BigDecimal.valueOf(23)).divide(BigDecimal.valueOf(24), SCALE, RoundingMode.HALF_UP);
-                            stockMid.setUp6(up6);
-                            stockMid.setUp12(up12);
-                            stockMid.setUp24(up24);
-                            stockMid.setDown6(down6);
-                            stockMid.setDown12(down12);
-                            stockMid.setDown24(down24);
                         } else if (closing_diff.compareTo(BigDecimal.valueOf(0)) < 0) {
                             stockMid.setObv(last_Stock.getObv().subtract(value.getDeal_amount()));
                             up6 = last_Stock.getUp6().multiply(BigDecimal.valueOf(5)).divide(BigDecimal.valueOf(6), SCALE, RoundingMode.HALF_UP);
@@ -221,12 +225,6 @@ public class ddd {
                             up12 = last_Stock.getUp12().multiply(BigDecimal.valueOf(11)).divide(BigDecimal.valueOf(12), SCALE, RoundingMode.HALF_UP);
                             down24 = (closing_diff.abs().add(last_Stock.getDown24().multiply(BigDecimal.valueOf(23)))).divide(BigDecimal.valueOf(24), SCALE, RoundingMode.HALF_UP);
                             up24 = last_Stock.getUp24().multiply(BigDecimal.valueOf(23)).divide(BigDecimal.valueOf(24), SCALE, RoundingMode.HALF_UP);
-                            stockMid.setDown6(down6);
-                            stockMid.setDown12(down12);
-                            stockMid.setDown24(down24);
-                            stockMid.setUp6(up6);
-                            stockMid.setUp12(up12);
-                            stockMid.setUp24(up24);
                         } else {
                             stockMid.setObv(last_Stock.getObv());
                             down6 = last_Stock.getDown6().abs().multiply(BigDecimal.valueOf(5)).divide(BigDecimal.valueOf(6), SCALE, RoundingMode.HALF_UP);
@@ -235,13 +233,15 @@ public class ddd {
                             up12 = last_Stock.getUp12().multiply(BigDecimal.valueOf(11)).divide(BigDecimal.valueOf(12), SCALE, RoundingMode.HALF_UP);
                             down24 = last_Stock.getDown24().abs().multiply(BigDecimal.valueOf(23)).divide(BigDecimal.valueOf(24), SCALE, RoundingMode.HALF_UP);
                             up24 = last_Stock.getUp24().multiply(BigDecimal.valueOf(23)).divide(BigDecimal.valueOf(24), SCALE, RoundingMode.HALF_UP);
-                            stockMid.setDown6(down6);
-                            stockMid.setDown12(down12);
-                            stockMid.setDown24(down24);
-                            stockMid.setUp6(up6);
-                            stockMid.setUp12(up12);
-                            stockMid.setUp24(up24);
                         }
+                        stockMid.setDown6(down6);
+                        stockMid.setDown12(down12);
+                        stockMid.setDown24(down24);
+                        stockMid.setUp6(up6);
+                        stockMid.setUp12(up12);
+                        stockMid.setUp24(up24);
+
+
                         BigDecimal k = (value.getRsv().add(last_Stock.getK().multiply(BigDecimal.valueOf(2)))).divide(BigDecimal.valueOf(3), SCALE, RoundingMode.HALF_UP);
                         BigDecimal d = (k.add(last_Stock.getD().multiply(BigDecimal.valueOf(2)))).divide(BigDecimal.valueOf(3), SCALE, RoundingMode.HALF_UP);
                         stockMid.setK(k);
@@ -254,9 +254,9 @@ public class ddd {
                          * Explain
                          *   这里不能使用.equals(Bigdecimal.ZERO),因为这里只比较0，而不能比较0.0
                          * */
-                        stockMid.setRsi6(up6.divide(up6.add(down6).doubleValue() == 0 ? new BigDecimal(1) : up6.add(down6), SCALE, RoundingMode.HALF_UP));
-                        stockMid.setRsi12(up12.divide(up12.add(down12).doubleValue() == 0 ? new BigDecimal(1) : up12.add(down12), SCALE, RoundingMode.HALF_UP));
-                        stockMid.setRsi24(up24.divide(up24.add(down24).doubleValue() == 0 ? new BigDecimal(1) : up24.add(down24), SCALE, RoundingMode.HALF_UP));
+                        stockMid.setRsi6(up6.multiply(BigDecimal.valueOf(100)).divide(up6.add(down6).doubleValue() == 0 ? BigDecimal.ONE : up6.add(down6), SCALE, RoundingMode.HALF_UP));
+                        stockMid.setRsi12(up12.multiply(BigDecimal.valueOf(100)).divide(up12.add(down12).doubleValue() == 0 ? BigDecimal.ONE : up12.add(down12), SCALE, RoundingMode.HALF_UP));
+                        stockMid.setRsi24(up24.multiply(BigDecimal.valueOf(100)).divide(up24.add(down24).doubleValue() == 0 ? BigDecimal.ONE : up24.add(down24), SCALE, RoundingMode.HALF_UP));
 
                         //Holden SAR指标
                         if (value.getRk() == SAR_START_FLAG || value.getRk() == (SAR_START_FLAG + 1)) {
@@ -299,15 +299,20 @@ public class ddd {
                                     sar_low.update(value.getSar_low());
                                 }
                             }
+                            stockMid.setSar_bull(sar_bull.value());
                         }
                         stockState.put(key, stockMid);
                     }
                 }
+                stockMid.setSar_af(sar_af.value());
+                stockMid.setSar_high(sar_high.value());
+                stockMid.setSar_low(sar_low.value());
+
                 //DMI
-                BigDecimal trex = null;
-                BigDecimal dmpex = null;
-                BigDecimal dmmex = null;
-                BigDecimal mpdi = null;
+                BigDecimal trex = BigDecimal.ZERO;
+                BigDecimal dmpex = BigDecimal.ZERO;
+                BigDecimal dmmex = BigDecimal.ZERO;
+                BigDecimal mpdi = BigDecimal.ZERO;
                 if (value.getRk() < DMI_START_FLAG) {//13天含以前
                     tr_sum.update((tr_sum.value() == null ? BigDecimal.valueOf(0) : tr_sum.value()).add(value.getTr()));
                     dmp_sum.update((dmp_sum.value() == null ? BigDecimal.valueOf(0) : dmp_sum.value()).add(value.getDmp()));
@@ -329,16 +334,18 @@ public class ddd {
                     tr_ex.update(trex);
                     dmp_ex.update(dmpex);
                     dmm_ex.update(dmmex);
+                    stockMid.setTrex(trex);
+                    stockMid.setDmmex(dmmex);
+                    stockMid.setDmpex(dmpex);
+
 
                     if (trex.doubleValue() != 0) {
                         BigDecimal pdi = dmpex.multiply(BigDecimal.valueOf(100)).divide(trex, SCALE, RoundingMode.HALF_UP);
                         BigDecimal mdi = dmmex.multiply(BigDecimal.valueOf(100)).divide(trex, SCALE, RoundingMode.HALF_UP);
                         stockMid.setPdi(pdi);
                         stockMid.setMdi(mdi);
-                        if (!mdi.add(pdi).equals(BigDecimal.ZERO)) {
+                        if (mdi.add(pdi).doubleValue() != 0) {
                             mpdi = mdi.subtract(pdi).abs().divide(pdi.add(mdi).doubleValue() == 0 ? BigDecimal.ONE : pdi.add(mdi), SCALE, RoundingMode.HALF_UP).multiply(BigDecimal.valueOf(100));
-                        } else {
-                            mpdi = BigDecimal.ZERO;
                         }
                     }
                     if (value.getRk() <= ADX_START_FLAG) {
@@ -355,6 +362,9 @@ public class ddd {
                         stockMid.setAdx(last_adx);
                     }
                 }
+                stockMid.setMpdi(mpdi);
+                stockMid.setHighest(value.getHighest());
+                stockMid.setLowest(value.getLowest());
                 return stockMid;
             }
         });
@@ -363,12 +373,12 @@ public class ddd {
         result.addSink(JdbcSink.sink(
                 "INSERT INTO ods_stock_step_two " +
                         "VALUES" +
-                        "(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                        "(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 (ps, t) -> {
                     ps.setString(1, t.getName());
                     ps.setInt(2, t.getRk());
                     ps.setString(3, t.getCode());
-                    ps.setString(4, t.getDate());
+                    ps.setString(4, t.getDs());
                     ps.setBigDecimal(5, t.getDeal_amount());
                     ps.setBigDecimal(6, t.getClosing_price());
                     ps.setBigDecimal(7, t.getEma12());
@@ -396,20 +406,27 @@ public class ddd {
                     ps.setBigDecimal(29, t.getPdi());
                     ps.setBigDecimal(30, t.getMdi());
                     ps.setBigDecimal(31, t.getAdx());
-
+                    ps.setBigDecimal(32, t.getHighest());
+                    ps.setBigDecimal(33, t.getLowest());
+                    ps.setBigDecimal(34, t.getTrex());
+                    ps.setBigDecimal(35, t.getDmpex());
+                    ps.setBigDecimal(36, t.getDmmex());
+                    ps.setBoolean(37, t.getSar_bull());
+                    ps.setBigDecimal(38, t.getSar_af());
+                    ps.setBigDecimal(39, t.getSar_high());
+                    ps.setBigDecimal(40, t.getSar_low());
+                    ps.setBigDecimal(41, t.getMpdi());
                 },
                 new JdbcExecutionOptions.Builder()
                         .withBatchSize(1).withMaxRetries(10) //这里批次大小来提交，这里最好写1次，因为我们处理的是历史数据
                         .build(),
                 new JdbcConnectionOptions.JdbcConnectionOptionsBuilder()
-                        .withUrl("jdbc:mysql://127.0.0.1:3306/spider_base?useSSL=false")
+                        .withUrl("jdbc:mysql://127.0.0.1:3306/spider_base?useSSL=false&useUnicode=true&characterEncoding=UTF-8")
                         .withUsername("root")
                         .withPassword("root")
                         .withDriverName(Driver.class.getName())
                         .build()
         ));
-
-
         env.execute();
     }
 }

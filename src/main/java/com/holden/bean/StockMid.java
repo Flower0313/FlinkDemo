@@ -22,9 +22,11 @@ public class StockMid {
     private String name;
     private int rk;
     private String code;
-    private String date;
+    private String ds;
     private BigDecimal deal_amount;
     private BigDecimal closing_price;
+    private BigDecimal highest;
+    private BigDecimal lowest;
     private BigDecimal ema12;
     private BigDecimal ema26;
     private BigDecimal dif;
@@ -45,9 +47,17 @@ public class StockMid {
     private BigDecimal d;
     private BigDecimal j;
     private BigDecimal sar;
-    private BigDecimal dea ;
-    private BigDecimal macd ;
-    private BigDecimal pdi ;
-    private BigDecimal mdi ;
+    private BigDecimal dea;
+    private BigDecimal macd;
+    private BigDecimal pdi;
+    private BigDecimal mdi;
     private BigDecimal adx;
+    private BigDecimal trex;
+    private BigDecimal dmpex;
+    private BigDecimal dmmex;
+    private Boolean sar_bull;
+    private BigDecimal sar_low;
+    private BigDecimal sar_high;
+    private BigDecimal sar_af ;
+    private BigDecimal mpdi ;
 }

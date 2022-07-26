@@ -12,7 +12,7 @@ public class ConnConfig {
     public final static String DATABASE = "spider_base";
     public final static String TABLE_LIST = "spider_base.employee,spider_base.department";
     //精度
-    public final static Integer SCALE = 6;
+    public final static Integer SCALE = 8;
     //初始值
     public final static BigDecimal INITIAL = new BigDecimal("0.0");
     //分隔符
@@ -31,5 +31,10 @@ public class ConnConfig {
     public final static Integer DMI_START_FLAG = 14;
 
     public final static Integer ADX_START_FLAG = 19;
+
+    public final static BigDecimal EMA3MU = BigDecimal.valueOf(4);
+
+    public final static BigDecimal EMA3ZI = EMA3MU.subtract(BigDecimal.valueOf(2));
+
 
 }
