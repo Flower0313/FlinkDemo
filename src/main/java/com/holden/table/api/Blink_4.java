@@ -25,7 +25,7 @@ public class Blink_4 {
         });
 
 
-        //基于Blink的流处理
+       /* //基于Blink的流处理
         EnvironmentSettings blinkStreamingSetting = EnvironmentSettings.newInstance()
                 .useBlinkPlanner()
                 .inStreamingMode()
@@ -39,7 +39,7 @@ public class Blink_4 {
                 .inBatchMode()
                 .build();
         //attention 不需要传env了,因为env是属于流处理的
-        TableEnvironment batchEnv = TableEnvironment.create(blinkBatchSetting);
+        TableEnvironment batchEnv = TableEnvironment.create(blinkBatchSetting);*/
 
         env.execute();
     }
