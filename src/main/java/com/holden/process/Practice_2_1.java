@@ -22,7 +22,7 @@ public class Practice_2_1 {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(1);
 
-        DataStreamSource<String> inputStream = env.socketTextStream("hadoop102", 7777);
+        DataStreamSource<String> inputStream = env.socketTextStream("43.142.117.50", 15951);
 
         DataStream<SensorReading> dataStream = inputStream.map(line -> {
             String[] fields = line.split(",");
